@@ -341,6 +341,51 @@ label.field{display:block;font-size:12px;font-weight:700;color:var(--muted);marg
 .interim .dots::after{content:"";animation:dots 1.2s infinite}
 @keyframes dots{0%{content:""}33%{content:"."}66%{content:".."}100%{content:"..."}}
 
+/* ── 말하는 중 실시간 번역 카드 (구글 번역 대화 모드) ──────── */
+.livepair{
+  position:relative;margin:10px 0 12px;padding:14px 15px 15px;border-radius:18px;
+  border:1px solid rgba(99,102,241,.5);
+  background:linear-gradient(180deg,rgba(99,102,241,.16),rgba(99,102,241,.055) 55%,rgba(7,11,20,.2));
+  box-shadow:0 10px 30px -12px rgba(79,70,229,.55), inset 0 1px 0 rgba(255,255,255,.06);
+  animation:pairIn .16s ease-out;
+}
+.livepair.me{border-color:rgba(16,185,129,.5);background:linear-gradient(180deg,rgba(16,185,129,.15),rgba(16,185,129,.05) 55%,rgba(7,11,20,.2));box-shadow:0 10px 30px -12px rgba(5,150,105,.5), inset 0 1px 0 rgba(255,255,255,.06)}
+@keyframes pairIn{from{opacity:.35;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.pair-head{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+.pair-head .who{font-size:10.5px;font-weight:800;letter-spacing:.09em;color:var(--indigo-2);text-transform:uppercase}
+.livepair.me .pair-head .who{color:var(--emerald-2)}
+.pair-live{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;letter-spacing:.06em;color:#C7D2FE;text-transform:uppercase}
+.pair-live i{width:6px;height:6px;border-radius:50%;background:#818CF8;animation:beat 1s infinite}
+.livepair.me .pair-live{color:#A7F3D0}
+.livepair.me .pair-live i{background:#34D399}
+@keyframes beat{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.72)}}
+.livepair .isrc{font-size:19px;line-height:1.45;font-weight:650;color:#FFFFFF;word-break:break-word;letter-spacing:-.01em}
+.livepair .isrc .dots::after{content:"";animation:dots 1.2s infinite}
+.livepair .idst{
+  margin-top:9px;padding-top:9px;border-top:1px solid rgba(255,255,255,.12);
+  font-size:20px;line-height:1.45;font-weight:700;color:#A5B4FC;word-break:break-word;letter-spacing:-.01em;
+}
+.livepair.me .idst{color:#6EE7B7}
+.livepair .idst .iar{color:rgba(255,255,255,.45);margin-right:7px;font-weight:600}
+.livepair .idst.pending{color:#C7D2FE;font-style:italic}
+.livepair .idst.fail{color:#FCA5A5;font-size:14px;font-weight:600;cursor:pointer;font-style:normal}
+.sr-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+  border:1px solid rgba(16,185,129,.35);background:rgba(16,185,129,.09);
+  font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#A7F3D0;white-space:nowrap;
+}
+.sr-badge i{width:6px;height:6px;border-radius:50%;background:#34D399;animation:beat 1.1s infinite}
+.sr-badge[data-state="restarting"]{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.1);color:#FCD34D}
+.sr-badge[data-state="restarting"] i{background:#F59E0B}
+.sr-badge[data-state="silent"]{border-color:rgba(148,163,184,.35);background:rgba(148,163,184,.1);color:#CBD5E1}
+.sr-badge[data-state="silent"] i{background:#94A3B8;animation-duration:2.4s}
+.sr-badge[data-state="error"]{border-color:rgba(244,63,94,.4);background:rgba(244,63,94,.1);color:#FCA5A5}
+.sr-badge[data-state="error"] i{background:#F43F5E;animation:none}
+.sr-badge[data-state="off"],.sr-badge[data-state="paused"]{border-color:rgba(148,163,184,.28);background:rgba(148,163,184,.07);color:#94A3B8}
+.sr-badge[data-state="off"] i,.sr-badge[data-state="paused"] i{background:#64748B;animation:none}
+.sr-badge[data-state="demo"]{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#C7D2FE}
+.sr-badge[data-state="demo"] i{background:#818CF8}
+
 .session-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .session-actions .btn{min-height:44px}
 .rec-toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 11px;background:rgba(255,255,255,.025);font-size:12px;font-weight:700;cursor:pointer;min-height:42px}
@@ -553,7 +598,10 @@ ul.clean.em li::before{background:var(--emerald)}
 @media (max-width:560px){
   .study-tools .search-wrap{flex:1 1 100%}
   .study-tools .btn.primary{margin-left:auto}
-  .session .captions{max-height:46dvh}
+  .session .captions{max-height:40dvh;min-height:120px}
+  .livepair{padding:12px 13px 13px;border-radius:16px}
+  .livepair .isrc{font-size:17.5px}
+  .livepair .idst{font-size:18.5px}
 }
 @media (max-width:380px){
   .brand-sub{display:none}
@@ -632,7 +680,7 @@ ul.clean.em li::before{background:var(--emerald)}
 (function () {
   'use strict';
 
-  var BUILD = '814d6331b8';
+  var BUILD = 'a70bbdb30a';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -650,6 +698,7 @@ ul.clean.em li::before{background:var(--emerald)}
     model: 'gpt-4o-mini',
     recDefault: true,
     autoScroll: true,
+    captionFirst: false,
     otherLang: 'en',
     myLang: 'ko',
     dirMode: 'auto',
@@ -808,13 +857,18 @@ ul.clean.em li::before{background:var(--emerald)}
     active: false, paused: false, demo: false, starting: false,
     meetingId: null, title: '', startedAt: 0, pausedMs: 0, pauseMark: 0,
     entries: [], speaker: 'other', interim: '', interimSpk: 'other',
+    interimDst: '', interimPending: false, interimErr: '', interimSeq: 0, interimReq: '', interimTimer: null,
     timerId: null, rafId: null, autoscroll: true,
-    recognize: null, wantMic: false, restartTimer: null, restarts: 0,
-    micError: '', transError: '',
+    recognize: null, wantMic: false, restartTimer: null, restarts: 0, srState: '',
+    micError: '', transError: '', micWarn: '', micAutoFixed: false, micTracks: 0,
+    watch: { timer: null, results: 0, heard: false, warned: false },
     audio: null, rec: { on: false, recorder: null, chunks: [], mime: '', startedAt: 0, lengthMs: 0, demoNodes: [] },
     demoAbort: null,
     speakerDirty: false
   };
+
+  var IS_ANDROID = /Android/i.test(navigator.userAgent || '');
+  var IS_MOBILE = IS_ANDROID || /iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || '');
 
   function saveSettings() { persist(K.settings, settings); }
   function saveMeetings() { persist(K.meetings, meetings); }
@@ -980,9 +1034,26 @@ ul.clean.em li::before{background:var(--emerald)}
     });
   }
 
+  // 1순위 translate.googleapis.com(gtx): 가장 빠르고 CORS가 안정적 — 실시간 대화 번역에 사용
+  // 2순위 clients5: gtx가 막히는 네트워크를 위한 폴백
   var GOOGLE_ENDPOINTS = [
     {
-      name: 'clients5',
+      name: 'translate.googleapis.com',
+      short: 'gtx',
+      url: function (q, sl, tl) {
+        return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' +
+          encodeURIComponent(sl) + '&tl=' + encodeURIComponent(tl) + '&dt=t&q=' + encodeURIComponent(q);
+      },
+      parse: function (data) {
+        if (Array.isArray(data) && Array.isArray(data[0])) {
+          return data[0].map(function (seg) { return (seg && seg[0]) || ''; }).join('').trim();
+        }
+        return '';
+      }
+    },
+    {
+      name: 'clients5.google.com',
+      short: 'clients5',
       url: function (q, sl, tl) {
         return 'https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=' +
           encodeURIComponent(sl) + '&tl=' + encodeURIComponent(tl) + '&q=' + encodeURIComponent(q);
@@ -993,19 +1064,6 @@ ul.clean.em li::before{background:var(--emerald)}
             if (Array.isArray(item)) return item[0] || '';
             return typeof item === 'string' ? item : (item && item[0]) || '';
           }).join(' ').trim();
-        }
-        return '';
-      }
-    },
-    {
-      name: 'gtx',
-      url: function (q, sl, tl) {
-        return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=' +
-          encodeURIComponent(sl) + '&tl=' + encodeURIComponent(tl) + '&dt=t&q=' + encodeURIComponent(q);
-      },
-      parse: function (data) {
-        if (Array.isArray(data) && Array.isArray(data[0])) {
-          return data[0].map(function (seg) { return (seg && seg[0]) || ''; }).join('').trim();
         }
         return '';
       }
@@ -1031,15 +1089,27 @@ ul.clean.em li::before{background:var(--emerald)}
       if (!t) throw new Error('empty translation');
       return t;
     }).catch(function (err) {
+      if (err && !err.endpoint) err.endpoint = ep.short;
       var next = epIdx + 1;
-      if (next < GOOGLE_ENDPOINTS.length) return translateOnePart(part, sl, tl, next, 0);
+      // 폴백으로 내려갈 때 attempt를 초기화하면 무한 재시도가 되므로 유지한다
+      if (next < GOOGLE_ENDPOINTS.length) return translateOnePart(part, sl, tl, next, attempt);
       if (attempt < 1 && !(err && err.status === 429)) {
-        return new Promise(function (r) { setTimeout(r, 450); }).then(function () {
+        return new Promise(function (r) { setTimeout(r, 350); }).then(function () {
           return translateOnePart(part, sl, tl, 0, attempt + 1);
         });
       }
       throw err;
     });
+  }
+
+  function transErrorText(err) {
+    var why = '';
+    if (err) {
+      if (err.status) why = 'HTTP ' + err.status;
+      else if (err.message) why = truncate(err.message, 48);
+    }
+    return '번역 서버에 연결하지 못했습니다' + (why ? ' (' + why + ')' : '') +
+      '. 네트워크를 확인하거나 잠시 후 다시 시도해 주세요.';
   }
 
   function openaiTranslate(text, sl, tl) {
@@ -1122,10 +1192,10 @@ ul.clean.em li::before{background:var(--emerald)}
           entry.failed = false;
           updateCaption(entry);
         })
-        .catch(function () {
+        .catch(function (err) {
           entry.pending = false;
           entry.failed = true;
-          rt.transError = '번역 서버에 연결하지 못했습니다. 네트워크를 확인하거나 잠시 후 다시 시도해 주세요.';
+          rt.transError = transErrorText(err);
           updateCaption(entry);
           updateLiveBanner();
         });
@@ -1139,6 +1209,88 @@ ul.clean.em li::before{background:var(--emerald)}
 
   function recognitionSupported() { return !!SR; }
 
+  /* ── 인식 상태 배지 (듣는 중… / 인식 재연결 중… / 무음) ───────── */
+  function srStateNow() {
+    if (rt.demo) return { key: 'demo', label: '데모 자막' };
+    if (!rt.active) return { key: 'off', label: '대기' };
+    if (rt.paused) return { key: 'paused', label: '일시정지' };
+    if (!SR) return { key: 'off', label: '음성 인식 미지원' };
+    if (!rt.wantMic) return { key: 'off', label: '자막 꺼짐' };
+    if (rt.recognize) {
+      var since = rt.watch.lastAt || rt.watch.startAt || 0;
+      var idle = since ? Date.now() - since : 0;
+      if (idle > 8000) return { key: 'silent', label: '듣는 중… · 무음 ' + Math.round(idle / 1000) + '초' };
+      return { key: 'listening', label: '듣는 중…' };
+    }
+    if (rt.micError) return { key: 'error', label: '인식 오류' };
+    return { key: 'restarting', label: '인식 재연결 중…' };
+  }
+
+  function updateSrStatus() {
+    var el = $('#srStatus');
+    if (!el) return;
+    var s = srStateNow();
+    el.setAttribute('data-state', s.key);
+    el.innerHTML = '<i></i>' + esc(s.label);
+  }
+
+  /* ── 인식 결과 → 확정 자막 / 실시간 번역 ─────────────────────── */
+  function finalizeUtterance(text) {
+    var spk = rt.speaker;
+    var dir = directionFor(text, langOf(spk));
+    var exact = trCache.get(dir.sl + '>' + dir.tl + '|' + text) || '';
+    var partial = '';
+    if (!exact && rt.interimDst && rt.interimReq && text.indexOf(rt.interimReq) === 0) partial = rt.interimDst;
+    clearInterim();
+    var entry = addUtterance(text, spk, { dir: dir, dst: exact ? exact : '' });
+    if (partial && !exact) { entry.dst = partial; entry.pending = true; updateCaption(entry); }
+    return entry;
+  }
+
+  function processResults(items) {
+    var interim = '';
+    items.forEach(function (it) {
+      if (!it || !it.txt) return;
+      if (it.isFinal) finalizeUtterance(it.txt);
+      else interim += ' ' + it.txt;
+    });
+    if (interim.trim()) {
+      rt.interim = interim.trim();
+      rt.interimSpk = rt.speaker;
+      scheduleInterimTranslation();
+    } else if (rt.interim) {
+      // 확정된 발화만 있었고 남은 말하는 중 텍스트가 없으면 비운다
+      rt.interim = '';
+      rt.interimDst = '';
+      rt.interimPending = false;
+      rt.interimErr = '';
+    }
+    renderInterim();
+    updateSrStatus();
+  }
+
+  function handleRecognitionError(code) {
+    if (code === 'aborted' || code === 'no-speech') { updateSrStatus(); return; }
+    // 안드로이드: 녹음이 마이크를 잡아 인식이 죽은 경우 → 자막 우선으로 자동 전환
+    if (code === 'audio-capture' && IS_MOBILE && rt.wantMic && rt.rec.on && !rt.micAutoFixed) {
+      rt.micAutoFixed = true;
+      releaseMicForCaptions({ auto: true });
+      return;
+    }
+    if (code === 'not-allowed' || code === 'service-not-allowed') {
+      rt.wantMic = false;
+      rt.micError = '마이크 사용이 거부되었습니다. 주소창의 자물쇠(권한)에서 마이크를 허용한 뒤 다시 시작해 주세요.';
+    } else if (code === 'audio-capture') {
+      rt.micError = '마이크를 찾을 수 없습니다. 다른 앱이 마이크를 쓰고 있지 않은지 확인해 주세요.';
+    } else if (code === 'network') {
+      rt.micError = '음성 인식 서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.';
+    } else {
+      rt.micError = '음성 인식 오류: ' + code;
+    }
+    updateLiveBanner();
+    updateSrStatus();
+  }
+
   function createRecognition() {
     var rec = new SR();
     rec.continuous = true;
@@ -1149,49 +1301,34 @@ ul.clean.em li::before{background:var(--emerald)}
     rec.onstart = function () {
       rt.micError = '';
       rt.restarts = 0;
+      rt.watch.startAt = rt.watch.startAt || Date.now();
+      rt.watch.lastAt = Date.now();
       updateLiveBanner();
+      updateSrStatus();
     };
 
     rec.onresult = function (e) {
-      var interim = '';
+      var items = [];
       for (var i = e.resultIndex; i < e.results.length; i++) {
         var res = e.results[i];
         var txt = (res[0] && res[0].transcript || '').trim();
         if (!txt) continue;
-        if (res.isFinal) {
-          rt.interim = '';
-          addUtterance(txt, rt.speaker);
-        } else {
-          interim += ' ' + txt;
-        }
+        items.push({ txt: txt, isFinal: !!res.isFinal });
       }
-      if (interim.trim()) {
-        rt.interim = interim.trim();
-        rt.interimSpk = rt.speaker;
+      if (items.length) {
+        rt.watch.results += 1;
+        rt.watch.lastAt = Date.now();
       }
-      renderInterim();
+      processResults(items);
     };
 
-    rec.onerror = function (e) {
-      var code = e.error;
-      if (code === 'aborted' || code === 'no-speech') return;
-      if (code === 'not-allowed' || code === 'service-not-allowed') {
-        rt.wantMic = false;
-        rt.micError = '마이크 사용이 거부되었습니다. 주소창의 자물쇠(권한)에서 마이크를 허용한 뒤 다시 시작해 주세요.';
-      } else if (code === 'audio-capture') {
-        rt.micError = '마이크를 찾을 수 없습니다. 다른 앱이 마이크를 쓰고 있지 않은지 확인해 주세요.';
-      } else if (code === 'network') {
-        rt.micError = '음성 인식 서버에 연결하지 못했습니다. 인터넷 연결을 확인해 주세요.';
-      } else {
-        rt.micError = '음성 인식 오류: ' + code;
-      }
-      updateLiveBanner();
-    };
+    rec.onerror = function (e) { handleRecognitionError(e.error); };
 
     rec.onend = function () {
       rt.recognize = null;
+      updateSrStatus();
       if (!rt.active || !rt.wantMic || rt.paused) return;
-      if (rt.restarts > 60) { rt.micError = '음성 인식이 반복해서 끊겼습니다. 미팅을 다시 시작해 주세요.'; updateLiveBanner(); return; }
+      if (rt.restarts > 60) { rt.micError = '음성 인식이 반복해서 끊겼습니다. 미팅을 다시 시작해 주세요.'; updateLiveBanner(); updateSrStatus(); return; }
       clearTimeout(rt.restartTimer);
       rt.restartTimer = setTimeout(function () {
         if (!rt.active || !rt.wantMic || rt.paused) return;
@@ -1215,6 +1352,7 @@ ul.clean.em li::before{background:var(--emerald)}
       rt.micError = '음성 인식을 시작하지 못했습니다: ' + (e && e.message ? e.message : e);
       updateLiveBanner();
     }
+    updateSrStatus();
   }
 
   function stopRecognition() {
@@ -1224,6 +1362,82 @@ ul.clean.em li::before{background:var(--emerald)}
       try { rt.recognize.onend = null; rt.recognize.abort(); } catch (e) {}
       rt.recognize = null;
     }
+    updateSrStatus();
+  }
+
+  /* 마이크를 놓은 직후 인식을 잠깐 뒤에 다시 켠다 (배지는 즉시 '재연결 중') */
+  function restartRecognitionSoon(delay) {
+    if (!rt.active || rt.demo) return;
+    rt.wantMic = true;
+    clearTimeout(rt.restartTimer);
+    updateSrStatus();
+    rt.restartTimer = setTimeout(function () {
+      if (!rt.active || !rt.wantMic || rt.paused) return;
+      startRecognition();
+    }, delay == null ? 240 : delay);
+  }
+
+  /* ── 안드로이드 마이크 충돌 감시 ────────────────────────────────
+     소리는 들어오는데(레벨 미터) 인식 결과가 없으면 getUserMedia가
+     마이크를 잡고 있는 것으로 보고 3초에 녹음을 자동으로 내린다. */
+  function armMicWatch() {
+    clearTimeout(rt.watch.timer);
+    rt.watch.timer = null;
+    rt.watch.results = 0;
+    rt.watch.heard = false;
+    rt.watch.warned = false;
+    rt.watch.startAt = Date.now();
+    rt.watch.lastAt = Date.now();
+    if (!rt.active || rt.demo || !IS_MOBILE) return;
+    rt.watch.timer = setTimeout(checkMicCollision, 3000);
+  }
+
+  function checkMicCollision() {
+    rt.watch.timer = null;
+    if (!rt.active || rt.demo || rt.paused) return;
+    if (!IS_MOBILE || !recognitionSupported() || !rt.wantMic || !rt.rec.on) return;
+    if (rt.watch.results > 0 || rt.watch.warned) return;
+    var elapsed = Date.now() - (rt.watch.startAt || Date.now());
+    // 소리가 들어오면 3초에 자동 판단, 무음이면 6초에 1탭 안내
+    var next = (rt.watch.heard && !rt.micAutoFixed) ? 2500 : 5800;
+    if (elapsed < next) { rt.watch.timer = setTimeout(checkMicCollision, next - elapsed); return; }
+    if (rt.watch.heard && !rt.micAutoFixed) {
+      // 말소리는 잡히는데 자막이 0건 → 마이크 충돌. 자막·번역을 살린다.
+      rt.micAutoFixed = true;
+      releaseMicForCaptions({ auto: true });
+      return;
+    }
+    rt.watch.warned = true;
+    rt.micWarn = 'manual';
+    updateLiveBanner();
+  }
+
+  /* 녹음을 내리고 마이크를 놓아 실시간 자막·번역을 되살린다 */
+  function releaseMicForCaptions(opts) {
+    opts = opts || {};
+    try {
+      stopRecording().then(function (a) { if (a) rt.lastClip = a; });
+    } catch (e) {}
+    teardownAudio();
+    rt.micError = '';
+    rt.micWarn = opts.auto ? 'auto' : '';
+    rt.watch.results = 0;
+    rt.watch.heard = false;
+    rt.watch.warned = true;
+    rt.watch.lastAt = Date.now();
+    stopRecognition();
+    restartRecognitionSoon(260);
+    if (opts.auto) {
+      // 이 폰에서는 다음 미팅부터 자막·번역을 먼저 켠다 (설정에서 되돌릴 수 있음)
+      settings.captionFirst = true;
+      saveSettings();
+      toast('녹음을 끄고 실시간 자막·번역을 다시 켰습니다. 다음부터는 자막 우선으로 시작합니다.');
+    } else {
+      toast('녹음을 끄고 실시간 자막·번역을 다시 켰습니다.');
+    }
+    updateRecUI();
+    updateLiveBanner();
+    updateSrStatus();
   }
 
   function setSpeaker(spk) {
@@ -1348,6 +1562,7 @@ ul.clean.em li::before{background:var(--emerald)}
       audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 }
     }).then(function (stream) {
       result.mic = stream;
+      rt.micTracks = stream.getAudioTracks().length;
       var src = ctx.createMediaStreamSource(stream);
       src.connect(gain);
       src.connect(analyser);
@@ -1361,13 +1576,14 @@ ul.clean.em li::before{background:var(--emerald)}
   }
 
   function teardownAudio() {
-    if (!rt.audio) return;
+    if (!rt.audio) { rt.micTracks = 0; return; }
     var a = rt.audio;
     try { (a.demoNodes || []).forEach(function (n) { try { n.stop(); } catch (e) {} }); } catch (e) {}
     try { if (a.mic) a.mic.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
     try { if (a.display) a.display.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
     try { if (a.ctx && a.ctx.state !== 'closed') a.ctx.close(); } catch (e) {}
     rt.audio = null;
+    rt.micTracks = 0;
   }
 
   function pickMime() {
@@ -1422,6 +1638,33 @@ ul.clean.em li::before{background:var(--emerald)}
       };
       try { rec.stop(); } catch (e) { rt.rec.on = false; resolve(null); }
     });
+  }
+
+  /* 녹음만 다시 켜기 ( 자막·인식은 그대로 ) */
+  function startRecordingAgain() {
+    if (rt.rec.recorder) return;
+    var go = function (a) {
+      if (!a || !a.dest || !rt.audio || !rt.audio.dest) {
+        toast((a && a.error) ? a.error : '녹음을 시작할 수 없습니다. 마이크 권한을 확인해 주세요.');
+        updateLiveBanner();
+        return;
+      }
+      if (!startRecording()) { toast('녹음을 시작하지 못했습니다.'); return; }
+      rt.micWarn = '';
+      rt.watch.results = 0;
+      rt.watch.heard = false;
+      rt.watch.warned = false;
+      rt.watch.startAt = Date.now();
+      rt.watch.lastAt = Date.now();
+      clearTimeout(rt.watch.timer);
+      if (IS_MOBILE) rt.watch.timer = setTimeout(checkMicCollision, 3000);
+      updateLiveBanner();
+      toast(IS_MOBILE
+        ? '녹음을 켰습니다. 자막이 끊기면 상단 안내에서 1탭으로 되돌릴 수 있어요.'
+        : '녹음을 시작했습니다.');
+    };
+    if (rt.audio && rt.audio.dest) return go(rt.audio);
+    setupAudio({}).then(go).catch(function () { toast('녹음을 시작할 수 없습니다.'); });
   }
 
   function pauseRecording() {
@@ -1485,6 +1728,7 @@ ul.clean.em li::before{background:var(--emerald)}
       sum += v * v;
     }
     var rms = Math.sqrt(sum / rt.levelData.length);
+    if (rms > 0.012) rt.watch.heard = true;
     var level = clamp(rms * 5.5, 0.05, 1);
     for (var b = 0; b < bars.length; b++) {
       var center = (bars.length - 1) / 2;
@@ -1514,8 +1758,8 @@ ul.clean.em li::before{background:var(--emerald)}
     clearInterval(rt.timerId);
     rt.timerId = setInterval(function () {
       var el = $('#timerVal');
-      if (!el) return;
-      el.textContent = fmtClock(elapsedMs());
+      if (el) el.textContent = fmtClock(elapsedMs());
+      updateSrStatus();
     }, 500);
   }
 
@@ -1532,7 +1776,7 @@ ul.clean.em li::before{background:var(--emerald)}
       dir: dir,
       src: text,
       dst: opts.dst || '',
-      pending: !opts.dst && !opts.noTranslate,
+      pending: opts.pending != null ? !!opts.pending : (!opts.dst && !opts.noTranslate),
       failed: false,
       star: false,
       demo: !!opts.demo
@@ -1562,7 +1806,7 @@ ul.clean.em li::before{background:var(--emerald)}
     var dst = el.querySelector('.cap-dst');
     if (!dst) return;
     if (entry.pending) {
-      dst.textContent = '번역 중…';
+      dst.textContent = entry.dst || '번역 중…';
       dst.className = 'cap-dst pending';
     } else if (entry.failed) {
       dst.textContent = '번역 실패 — 탭해서 다시 시도';
@@ -1578,7 +1822,7 @@ ul.clean.em li::before{background:var(--emerald)}
   function captionHTML(entry) {
     var cls = 'cap' + (entry.spk === 'me' ? ' me' : '') + (entry.star ? ' star' : '');
     var dstCls = entry.pending ? 'cap-dst pending' : (entry.failed ? 'cap-dst fail' : 'cap-dst');
-    var dstTxt = entry.pending ? '번역 중…' : (entry.failed ? '번역 실패 — 탭해서 다시 시도' : (entry.dst || '—'));
+    var dstTxt = entry.pending ? (entry.dst || '번역 중…') : (entry.failed ? '번역 실패 — 탭해서 다시 시도' : (entry.dst || '—'));
     return '<div class="' + cls + '" id="cap-' + entry.i + '" data-i="' + entry.i + '">' +
       '<div class="cap-head">' +
         '<span class="cap-time">' + fmtClock(entry.t) + '</span>' +
@@ -1605,14 +1849,132 @@ ul.clean.em li::before{background:var(--emerald)}
     box.appendChild(wrap.firstChild);
   }
 
+  /* ── 말하는 중 실시간 번역 (구글 번역 대화 모드) ────────────────
+     interim 텍스트가 자라면 420ms 쓰로틀로 translateText를 호출해
+     원문 바로 아래에 번역문을 동시에 채운다. */
+  var INTERIM_THROTTLE = 420;
+
+  function clearInterim() {
+    clearTimeout(rt.interimTimer);
+    rt.interimTimer = null;
+    if (!rt.interim && !rt.interimDst) return;
+    rt.interim = '';
+    rt.interimDst = '';
+    rt.interimPending = false;
+    rt.interimErr = '';
+    rt.interimReq = '';
+    rt.interimSeq++;
+    renderInterim();
+  }
+
+  function scheduleInterimTranslation() {
+    var text = (rt.interim || '').trim();
+    if (!text) { renderInterim(); return; }
+    var dir = directionFor(text, langOf(rt.interimSpk));
+    var cached = trCache.get(dir.sl + '>' + dir.tl + '|' + text);
+    if (cached) {
+      rt.interimDst = cached;
+      rt.interimPending = false;
+      rt.interimErr = '';
+      rt.interimReq = text;
+      renderInterim();
+      return;
+    }
+    // 너무 짧은 조각은 그대로 둔다 ("Okay" 한 단어 번역은 흐름을 끊음)
+    if (text.replace(/\s+/g, '').length < 3) {
+      rt.interimPending = false;
+      rt.interimErr = '';
+      renderInterim();
+      return;
+    }
+    if (text === rt.interimReq && !rt.interimErr) { renderInterim(); return; }
+    if (!rt.interimPending) { rt.interimPending = true; rt.interimErr = ''; }
+    renderInterim();
+    clearTimeout(rt.interimTimer);
+    var now = Date.now();
+    var wait = Math.max(0, (rt.interimAt || 0) + INTERIM_THROTTLE - now);
+    rt.interimTimer = setTimeout(fireInterimTranslation, wait);
+  }
+
+  function fireInterimTranslation() {
+    rt.interimTimer = null;
+    var text = (rt.interim || '').trim();
+    if (!text) return;
+    var dir = directionFor(text, langOf(rt.interimSpk));
+    var key = dir.sl + '>' + dir.tl + '|' + text;
+    if (trCache.has(key)) {
+      rt.interimDst = trCache.get(key);
+      rt.interimPending = false;
+      rt.interimErr = '';
+      rt.interimReq = text;
+      renderInterim();
+      return;
+    }
+    if (rt.interimReq === text && !rt.interimErr) return;
+    var token = ++rt.interimSeq;
+    rt.interimAt = Date.now();
+    rt.interimReq = text;
+    rt.interimPending = true;
+    rt.interimErr = '';
+    renderInterim();
+    translateText(text, dir.sl, dir.tl).then(function (t) {
+      if (token !== rt.interimSeq) return;
+      var cur = (rt.interim || '').trim();
+      if (!cur) return;
+      // 말이 더 이어졌으면 앞부분 번역이라도 먼저 보여 주고, 새 번역을 기다린다
+      if (cur !== text && cur.indexOf(text) !== 0 && text.indexOf(cur) !== 0) return;
+      rt.interimDst = t;
+      rt.interimErr = '';
+      rt.interimPending = cur !== text;
+      renderInterim();
+    }).catch(function (err) {
+      if (token !== rt.interimSeq) return;
+      var cur = (rt.interim || '').trim();
+      if (!cur) return;
+      rt.interimPending = false;
+      rt.interimErr = '번역 실패' + (err && err.status ? ' (HTTP ' + err.status + ')' : '') + ' · 탭해서 다시 시도';
+      rt.transError = transErrorText(err);
+      renderInterim();
+      updateLiveBanner();
+    });
+  }
+
+  function retryInterim() {
+    if (!rt.interim) return;
+    rt.interimErr = '';
+    rt.interimReq = '';
+    rt.interimAt = 0;
+    rt.interimPending = true;
+    renderInterim();
+    fireInterimTranslation();
+  }
+
   function renderInterim() {
     var el = $('#interimLine');
     if (!el) return;
-    if (!rt.interim) { el.classList.add('hide'); el.innerHTML = ''; return; }
+    if (!rt.interim) {
+      el.classList.add('hide');
+      el.setAttribute('data-state', 'idle');
+      el.innerHTML = '';
+      return;
+    }
     el.classList.remove('hide');
-    el.className = 'interim' + (rt.interimSpk === 'me' ? ' me' : '');
-    el.innerHTML = '<span class="who">' + (rt.interimSpk === 'me' ? '나' : '상대') + ' ' + entryDirTag({ src: rt.interim, lang: langOf(rt.interimSpk) }) + '</span>' +
-      '<span>' + esc(rt.interim) + '<span class="dots"></span></span>';
+    el.className = 'livepair' + (rt.interimSpk === 'me' ? ' me' : '');
+    var dir = directionFor(rt.interim, langOf(rt.interimSpk));
+    var tag = LANG_TAG[dir.sl] + '→' + LANG_TAG[dir.tl];
+    var state = rt.interimPending ? 'pending' : (rt.interimErr ? 'fail' : (rt.interimDst ? 'done' : 'wait'));
+    var dst = rt.interimErr ? rt.interimErr : (rt.interimDst || '번역 중…');
+    el.setAttribute('data-state', state);
+    el.innerHTML =
+      '<div class="pair-head">' +
+        '<span class="who">' + (rt.interimSpk === 'me' ? '나' : '상대') + '</span>' +
+        '<span class="tag ' + dir.sl + ' dir">' + tag + '</span>' +
+        '<span class="pair-live"><i></i>' + (rt.interimSpk === 'me' ? '말하는 중' : '듣는 중') + '</span>' +
+      '</div>' +
+      '<div class="isrc">' + esc(rt.interim) + (/[.!?。？！,，]$/.test(rt.interim) ? '' : '<span class="dots"></span>') + '</div>' +
+      '<div class="idst' + (rt.interimPending ? ' pending' : '') + (rt.interimErr ? ' fail' : '') + '"' +
+        (rt.interimErr ? ' data-act="retry-interim" role="button" tabindex="0"' : '') + '>' +
+        '<span class="iar">→</span>' + esc(dst) + '</div>';
   }
 
   function startMeeting(opts) {
@@ -1628,10 +1990,19 @@ ul.clean.em li::before{background:var(--emerald)}
     rt.pauseMark = 0;
     rt.entries = [];
     rt.interim = '';
+    rt.interimDst = '';
+    rt.interimPending = false;
+    rt.interimErr = '';
+    rt.interimReq = '';
+    rt.interimSeq++;
     rt.speaker = fixedSourceLang() === 'ko' ? 'me' : 'other';
     rt.autoscroll = true;
     rt.micError = '';
     rt.transError = '';
+    rt.micWarn = '';
+    rt.micAutoFixed = false;
+    rt.micTracks = 0;
+    rt.watch = { timer: null, results: 0, heard: false, warned: false, startAt: 0, lastAt: 0 };
     rt.restarts = 0;
     rt.title = opts.title || (rt.demo ? '데모 비즈니스 미팅' : '비즈니스 미팅 · ' + fmtShort(new Date()));
     rt.rec = { on: false, recorder: null, chunks: [], mime: '', startedAt: 0, lengthMs: 0, demoNodes: [] };
@@ -1641,18 +2012,35 @@ ul.clean.em li::before{background:var(--emerald)}
     renderMain();
     startTimer();
 
-    return setupAudio({ demo: rt.demo }).then(function (a) {
+    // 안드로이드: 설정에서 '실시간 자막 우선'을 켜른 경우는 녹음 없이 시작
+    var captionFirst = IS_MOBILE && !!settings.captionFirst && !rt.demo;
+
+    // 음성 인식을 먼저 시작 — getUserMedia가 마이크를 선점하기 전에 인식이 잡아야 한다
+    if (!rt.demo) startRecognition();
+
+    // 자막 우선 모드에서는 마이크 스트림을 아예 열지 않는다 (인식 독점 방지)
+    var audioP = captionFirst
+      ? Promise.resolve({ ctx: null, dest: null, analyser: null, mic: null, display: null, gain: null, error: '' })
+      : setupAudio({ demo: rt.demo });
+
+    return audioP.then(function (a) {
       if (a.error) {
         rt.micError = a.error;
         updateLiveBanner();
       }
       startMeter();
-      if (settings.recDefault && a.dest && (a.mic || rt.demo)) startRecording();
+      if (captionFirst) {
+        rt.micWarn = '';
+      } else if (settings.recDefault && a.dest && (a.mic || rt.demo)) {
+        startRecording();
+      }
       if (rt.demo) {
         playDemo();
-      } else {
-        startRecognition();
+      } else if (!captionFirst) {
+        armMicWatch();
       }
+      updateLiveBanner();
+      updateSrStatus();
       rt.starting = false;
     });
   }
@@ -1703,6 +2091,8 @@ ul.clean.em li::before{background:var(--emerald)}
       rt.pauseMark = Date.now();
       stopRecognition();
       pauseRecording();
+      clearTimeout(rt.watch.timer);
+      rt.watch.timer = null;
       var t = $('#timerVal');
       if (t) t.classList.add('paused');
       renderMain();
@@ -1712,6 +2102,7 @@ ul.clean.em li::before{background:var(--emerald)}
       rt.paused = false;
       resumeRecording();
       if (!rt.demo) startRecognition();
+      if (rt.rec.on) armMicWatch();
       renderMain();
     }
   }
@@ -1731,6 +2122,10 @@ ul.clean.em li::before{background:var(--emerald)}
     rt.wantMic = false;
     clearInterval(rt.timerId);
     cancelAnimationFrame(rt.rafId);
+    clearTimeout(rt.watch.timer);
+    rt.watch.timer = null;
+    clearTimeout(rt.interimTimer);
+    rt.interimTimer = null;
     var durationMs = elapsedMs();
     var meeting = {
       id: rt.meetingId,
@@ -2228,6 +2623,8 @@ ul.clean.em li::before{background:var(--emerald)}
       startTimer();
       startMeter();
       renderInterim();
+      updateLiveBanner();
+      updateSrStatus();
       if (rt.autoscroll) scrollCaptions();
       updateRecUI();
     }
@@ -2317,6 +2714,7 @@ ul.clean.em li::before{background:var(--emerald)}
         dirBlockHTML(true) +
         '<div class="speaker-switch">' + speakerBtnHTML('other') + speakerBtnHTML('me') + '</div>' +
         '<div class="caption-tools">' +
+          '<span class="sr-badge" id="srStatus" data-state="' + srStateNow().key + '"><i></i>' + esc(srStateNow().label) + '</span>' +
           '<span class="tiny dim" id="utteranceCount">' + rt.entries.length + '개 발언</span>' +
           '<span class="tiny dim">·</span>' +
           '<span class="tiny dim" id="dirMini">' + DIR_TAG[dirMode()] + '</span>' +
@@ -2324,8 +2722,8 @@ ul.clean.em li::before{background:var(--emerald)}
           '<button class="rec-toggle" data-act="toggle-rec" aria-pressed="' + (!!recOn) + '"><span class="sw"></span>녹음</button>' +
         '</div>' +
         '<div id="liveBanner"></div>' +
+        '<div id="interimLine" class="livepair hide" data-state="idle"></div>' +
         '<div class="captions" id="captionList">' + rt.entries.map(captionHTML).join('') + '</div>' +
-        '<div id="interimLine" class="interim hide"></div>' +
         '<div class="session-actions">' +
           '<button class="btn" data-act="pause">' + (rt.paused ? I.play : I.pause) + ' ' + (rt.paused ? '재개' : '일시정지') + '</button>' +
           '<button class="btn stop" data-act="end" id="endBtn">' + I.stop + ' 미팅 종료</button>' +
@@ -2348,6 +2746,19 @@ ul.clean.em li::before{background:var(--emerald)}
     var box = $('#liveBanner');
     if (!box) return;
     var out = '';
+    if (rt.micWarn) {
+      var auto = rt.micWarn === 'auto';
+      out += '<div class="banner warn mic-warn" style="margin-bottom:8px">' + I.info +
+        '<div class="grow">' +
+          (auto
+            ? '<b>녹음이 마이크를 잡고 있어 자막이 멈췄어요.</b><br>녹음을 끄고 <b>실시간 자막·번역을 다시 켰습니다.</b> 녹음은 필요할 때 버튼으로 다시 켤 수 있어요.'
+            : '<b>안드로이드 폰에서는 녹음과 음성인식이 마이크를 동시에 못 쓰는 경우가 있어요.</b><br>녹음을 끄면 실시간 자막·번역이 바로 살아납니다.') +
+        '</div>' +
+        '<button class="btn sm" data-act="' + (auto ? 'toggle-rec' : 'fix-mic') + '">' +
+          (auto ? '녹음 다시 켜기' : '녹음 끄고 실시간 자막 켜기') + '</button>' +
+        (auto ? '<button class="btn sm ghost" data-act="dismiss-mic-warn">닫기</button>' : '') +
+        '</div>';
+    }
     if (rt.micError) {
       out += '<div class="banner err" style="margin-bottom:8px">' + I.info + '<div class="grow">' + esc(rt.micError) + '</div></div>';
     }
@@ -2831,6 +3242,11 @@ ul.clean.em li::before{background:var(--emerald)}
           '<button class="switch" data-act="toggle-rec-default" aria-pressed="' + (settings.recDefault ? 'true' : 'false') + '" aria-label="자동 녹음"></button></div>' +
         '<div class="set-row"><div><div class="lbl">자막 자동 스크롤</div><div class="sub">새 발언이 오면 맨 아래로</div></div>' +
           '<button class="switch" data-act="toggle-autoscroll" aria-pressed="' + (settings.autoScroll ? 'true' : 'false') + '" aria-label="자동 스크롤"></button></div>' +
+        '<div class="set-row"><div><div class="lbl">실시간 자막 우선' + (IS_MOBILE ? ' (모바일 권장)' : '') + '</div>' +
+          '<div class="sub">' + (IS_MOBILE
+            ? '켜면 안드로이드에서 녹음 없이 시작해 자막·번역을 먼저 살립니다. 충돌이 감지되면 자동으로 이 모드로 바꿉니다.'
+            : '데스크톱은 끄는 것을 권장합니다 (녹음+자막 동시 동작)') + '</div></div>' +
+          '<button class="switch" data-act="toggle-caption-first" aria-pressed="' + (settings.captionFirst ? 'true' : 'false') + '" aria-label="실시간 자막 우선"></button></div>' +
       '</div>' +
       '<div class="set-group"><h3>데이터</h3>' +
         '<div class="set-row"><div><div class="lbl">백업 내보내기</div><div class="sub">미팅 기록·표현 (녹음 오디오·API 키 제외)</div></div>' +
@@ -2972,14 +3388,22 @@ ul.clean.em li::before{background:var(--emerald)}
         if (rt.rec.recorder) {
           stopRecording().then(function (a) {
             if (a) { rt.lastClip = a; toast('녹음을 중지했습니다. (' + fmtBytes(a.blob.size) + ')'); }
-            updateRecUI();
           });
-        } else if (rt.audio && rt.audio.dest) {
-          if (startRecording()) toast('녹음을 시작했습니다.');
+          // 녹음 OFF = 마이크 스트림까지 반납 → 안드로이드에서 음성 인식이 살아난다
+          teardownAudio();
+          rt.micWarn = '';
+          stopRecognition();
+          restartRecognitionSoon(220);
+          updateRecUI();
+          updateLiveBanner();
+          toast('녹음을 끄고 마이크를 반납했습니다. 실시간 자막은 계속됩니다.');
         } else {
-          toast('녹음을 시작할 수 없습니다. 마이크 권한을 확인해 주세요.');
+          startRecordingAgain();
         }
         break;
+      case 'fix-mic': releaseMicForCaptions({ auto: false }); break;
+      case 'dismiss-mic-warn': rt.micWarn = ''; updateLiveBanner(); break;
+      case 'retry-interim': retryInterim(); break;
       case 'sysaudio': addSystemAudio(); break;
       case 'online-guide': onlineGuide(); break;
       case 'star': {
@@ -3184,6 +3608,13 @@ ul.clean.em li::before{background:var(--emerald)}
         saveSettings(); settingsSheet(); renderMain(); toast('API 키를 삭제했습니다.');
         break;
       case 'toggle-rec-default': settings.recDefault = !settings.recDefault; saveSettings(); settingsSheet(); renderMain(); break;
+      case 'toggle-caption-first':
+        settings.captionFirst = !settings.captionFirst;
+        saveSettings(); settingsSheet(); renderMain();
+        toast(settings.captionFirst
+          ? '실시간 자막 우선 — 다음 미팅부터 녹음 없이 자막·번역을 먼저 켭니다.'
+          : '녹음 + 자막 동시 — 다음 미팅부터 녹음도 함께 켭니다.');
+        break;
       case 'toggle-autoscroll': settings.autoScroll = !settings.autoScroll; rt.autoscroll = settings.autoScroll; saveSettings(); settingsSheet(); break;
       case 'translate-test': {
         var box = $('#testResult');
@@ -3353,14 +3784,29 @@ ul.clean.em li::before{background:var(--emerald)}
   window.MeetingMate = {
     version: VERSION,
     build: BUILD,
-    get state() { return { tab: ui.tab, active: rt.active, entries: rt.entries.length, meetings: meetings.length, study: study.length, dirMode: dirMode(), listenLang: langOf(rt.speaker) }; },
+    get state() {
+      return {
+        tab: ui.tab, active: rt.active, entries: rt.entries.length, meetings: meetings.length, study: study.length,
+        dirMode: dirMode(), listenLang: langOf(rt.speaker),
+        audio: !!rt.audio, micTracks: rt.micTracks, recOn: !!(rt.rec.recorder && rt.rec.recorder.state === 'recording'),
+        wantMic: rt.wantMic, srState: srStateNow().key, micWarn: rt.micWarn, micAutoFixed: rt.micAutoFixed,
+        interim: rt.interim, interimDst: rt.interimDst, interimPending: rt.interimPending, captionFirst: !!settings.captionFirst
+      };
+    },
     demoLines: demoLines,
     _ruleSummary: ruleSummary,
     _test: {
       dirMode: function () { return dirMode(); },
       listenLang: function () { return langOf(rt.speaker); },
       direction: function (text, hint) { return directionFor(text, hint); },
-      feed: function (text, spk) { return addUtterance(text, spk || 'other'); }
+      feed: function (text, spk) { return addUtterance(text, spk || 'other'); },
+      interim: function (text, spk) { if (spk) rt.speaker = spk; processResults([{ txt: text, isFinal: false }]); },
+      final: function (text, spk) { if (spk) rt.speaker = spk; return processResults([{ txt: text, isFinal: true }]); },
+      srError: function (code) { handleRecognitionError(code); },
+      micHeard: function () {
+        rt.watch.heard = true;
+        if (rt.active && IS_MOBILE) { clearTimeout(rt.watch.timer); rt.watch.timer = setTimeout(checkMicCollision, 120); }
+      }
     }
   };
 })();
