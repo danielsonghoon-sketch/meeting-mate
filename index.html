@@ -459,13 +459,13 @@ ul.clean.em li::before{background:var(--emerald)}
 .learn-btn.on{background:rgba(16,185,129,.16);border-color:rgba(16,185,129,.45);color:#8DEBC8}
 
 /* review overlay */
-.review-wrap{position:fixed;inset:0;z-index:60;background:rgba(4,7,13,.92);backdrop-filter:blur(8px);display:flex;flex-direction:column;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(18px + var(--safe-b))}
+.review-wrap{position:fixed;inset:0;z-index:60;background:rgba(4,7,13,.92);backdrop-filter:blur(8px);display:flex;flex-direction:column;justify-content:center;padding:calc(14px + env(safe-area-inset-top,0px)) 16px calc(18px + var(--safe-b))}
 .review-head{display:flex;align-items:center;gap:10px;max-width:560px;width:100%;margin:0 auto 12px}
 .review-head .rt{font-size:13px;font-weight:800}
 .review-progress{height:5px;border-radius:99px;background:#1B2942;overflow:hidden;max-width:560px;width:100%;margin:0 auto 16px}
 .review-progress i{display:block;height:100%;background:linear-gradient(90deg,#6366F1,#10B981);transition:width .25s}
 .flash{
-  flex:1 1 auto;max-width:560px;width:100%;margin:0 auto;min-height:270px;max-height:440px;
+  flex:0 1 auto;max-width:560px;width:100%;margin:0 auto;min-height:300px;max-height:52dvh;overflow:auto;
   border-radius:24px;border:1px solid var(--line);padding:26px 22px;
   background:linear-gradient(160deg,#152135,#0F1928);box-shadow:0 30px 60px -30px #000;
   display:flex;flex-direction:column;justify-content:center;text-align:center;cursor:pointer;
@@ -607,7 +607,7 @@ ul.clean.em li::before{background:var(--emerald)}
 (function () {
   'use strict';
 
-  var BUILD = '9238a440cc';
+  var BUILD = 'a50178d104';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */

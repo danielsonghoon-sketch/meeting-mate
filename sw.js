@@ -1,4 +1,4 @@
-const CACHE = 'meetingmate-9238a440cc';
+const CACHE = 'meetingmate-a50178d104';
 const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png", "./icon-maskable-192.png", "./icon-maskable-512.png", "./apple-touch-icon.png", "./favicon-32.png"];
 
 self.addEventListener('install', (event) => {
