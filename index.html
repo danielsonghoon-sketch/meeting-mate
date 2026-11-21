@@ -508,6 +508,31 @@ ul.clean li::before{content:"";position:absolute;left:3px;top:8px;width:5px;heig
 ul.clean.em li::before{background:var(--emerald)}
 ul.clean.emph li::before{background:var(--amber)}
 .mb-sub{margin:15px 0 7px;font-size:11px;font-weight:800;letter-spacing:.07em;color:var(--dim);text-transform:uppercase}
+
+/* ── 키워드형 요약 ─────────────────────────────────────────── */
+.kw-chips{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 11px}
+.kw-chip{
+  font-size:11.5px;font-weight:800;letter-spacing:.01em;line-height:1.5;
+  padding:2.5px 9px;border-radius:999px;
+  color:#A7F3D0;background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.34);
+  white-space:nowrap;
+}
+.kw-chips.tiny{gap:4px;margin:7px 0 0}
+.kw-chips.tiny .kw-chip{font-size:10px;padding:1px 7px;color:#8DEBC8;background:rgba(16,185,129,.1)}
+.kw-label{
+  display:inline-block;flex:0 0 auto;font-size:11px;font-weight:800;line-height:1.6;
+  padding:1px 7px;border-radius:6px;margin-right:7px;
+  color:#C7D2FE;background:rgba(99,102,241,.18);border:1px solid rgba(99,102,241,.34);
+  white-space:nowrap;vertical-align:1px;
+}
+ul.clean.kwlist li{padding-left:0;display:flex;align-items:flex-start;gap:0}
+ul.clean.kwlist li::before{display:none}
+ul.clean.kwlist li>span{flex:1;min-width:0}
+.kw-overview .oneliner{margin-top:1px}
+.action-head{display:flex;align-items:flex-start;flex-wrap:wrap;gap:0}
+.action-head .kw-label{margin-top:1px}
+.action-task{flex:1;min-width:0}
+.trow .ts .kw-label{font-size:10px;padding:0 5px}
 .minutes-block h2{text-transform:none;letter-spacing:.02em;font-size:13px;color:var(--txt-2)}
 .minutes-block .oneliner{margin-bottom:4px}
 .doc-btn{white-space:nowrap}
@@ -729,7 +754,7 @@ ul.clean.emph li::before{background:var(--amber)}
 (function () {
   'use strict';
 
-  var BUILD = '42858eb62d';
+  var BUILD = 'a989b01996';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -2435,6 +2460,277 @@ ul.clean.emph li::before{background:var(--amber)}
   var DECISION_RE = /\b(we will|we'll|let's|agreed|agree|decided|confirm|approved|go with|proceed|finalize|finalise)\b|하겠습니다|하기로|확정|동의|진행하겠|결정|마무리하겠|보내드리겠|검토하겠|맞추겠/i;
   var ACTION_RE = /\b(by (monday|tuesday|wednesday|thursday|friday|next week|next month|the end of)|deadline|send|prepare|share|check|review|confirm|update|follow up|provide|arrange|schedule|ship)\b|까지|보내|준비|확인|검토|공유|정리|회신|발송|요청/i;
 
+  /* ═══════════════════════════════════════════════════════════
+     키워드형 요약 엔진
+     원문을 절 단위로 쪼개 [키워드 + 수치/일정 + 액션]만 남긴
+     짧은 불릿("키워드: 핵심 내용")으로 압축한다.
+     ═══════════════════════════════════════════════════════════ */
+  var KW_RULES = [
+    { kw: '단가', re: /(단가|가격|price|pricing|per unit|unit price)/i },
+    { kw: '견적', re: /(견적|quotation|quote)/i },
+    { kw: '할인', re: /(할인|discount)/i },
+    { kw: '수량', re: /(수량|volume|quantity|MOQ|최소 주문|분기당|컨테이너\s*\d)/i },
+    { kw: '주문', re: /(주문|order)/i },
+    { kw: '납기', re: /(납기|lead time|리드타임|소요\s*\d+\s*일|상차|출하)/i },
+    { kw: '선적', re: /(선적|shipment|shipping|부산항)/i },
+    { kw: '샘플', re: /(샘플|sample)/i },
+    { kw: '포장', re: /(포장|packaging|packing|사양서|spec)/i },
+    { kw: '품질', re: /(품질|quality|\bQC\b|검수|클레임)/i },
+    { kw: '인증', re: /(인증|certificat|\bFDA\b|\bCE\b)/i },
+    { kw: '결제', re: /(결제|payment|T\/T|L\/C|송금|대금)/i },
+    { kw: '계약', re: /(계약|contract|agreement)/i },
+    { kw: '물류', re: /(물류|logistics|운송|배송|tracking|운송장)/i },
+    { kw: '입점', re: /(입점|listing|신규 라인|런칭|launch)/i },
+    { kw: '생산', re: /(생산|공장|factory|라인)/i },
+    { kw: '일정', re: /(일정|schedule|마감|deadline)/i }
+  ];
+  var KW_NUM_RE = /\d[\d.,]*\s*(?:달러|불|원|퍼센트|%|일|주|개월|달|대|세트|개|피트|건|년|월|명|톤)|(?:\d{1,2}\s*\/\s*\d{1,2})/;
+  var KW_DUE_RE = /((?:이번|다음|이달|다음달|금주|차주)\s*(?:주|달|월)?\s*(?:월|화|수|목|금|토|일)?\s*요일?|오늘|내일|모레|이달|다음달)\s*(?:말|초|중순)?\s*(?:까지|전)/;
+  var KW_VERB_RE = /(확정|발송|회신|공유|요청|검토|진행|조정|정리|확인|송부|출하|선적|보내|받|맞추|늘|줄이|가능|필요|계획|예정|검수|승인|합의|동의)/;
+  var KW_PARTICLE_RE = /^(은|는|이|가|을|를|의|도|에|에서|에는|에서는|로|으로|부터|까지|과|와|만)/;
+  /* 서술형 종결어미 → 회의록 메모체 */
+  var KW_TAIL = [
+    [/해\s*주실\s*수\s*있나요$/, ' 요청'], [/보내\s*주실\s*수\s*있나요$/, '발송 요청'],
+    [/알려\s*주실\s*수\s*있나요$/, '공유 요청'], [/주실\s*수\s*있나요$/, ' 가능 여부'],
+    [/보내\s*주시면\s*좋겠습니다$/, '발송 요청'], [/회신해\s*주시면\s*좋겠습니다$/, '회신 요청'],
+    [/해\s*주시면\s*좋겠습니다$/, ' 요청'], [/주시면\s*좋겠습니다$/, ' 요청'],
+    [/해\s*주시기\s*바랍니다$/, ' 요청'], [/주시기\s*바랍니다$/, ' 요청'],
+    [/발송해\s*주세요$/, '발송 요청'], [/보내\s*주세요$/, '발송 요청'], [/회신해\s*주세요$/, '회신 요청'],
+    [/확인해\s*주세요$/, '확인 요청'], [/해\s*주세요$/, ' 요청'], [/주세요$/, ' 요청'], [/부탁드립니다$/, ' 요청'],
+    [/보내\s*드리겠습니다$/, '발송'], [/알려\s*드리겠습니다$/, '공유'], [/회신\s*드리겠습니다$/, '회신'],
+    [/공유하겠습니다$/, '공유'], [/발송하겠습니다$/, '발송'], [/송부하겠습니다$/, '송부'],
+    [/회신하겠습니다$/, '회신'], [/진행하겠습니다$/, '진행'], [/정리하겠습니다$/, '정리'],
+    [/확인하겠습니다$/, '확인'], [/검토하겠습니다$/, '검토'], [/확정하겠습니다$/, '확정'], [/맞추겠습니다$/, '조정'],
+    [/맞출\s*수\s*있을\s*것\s*같습니다$/, '조정 가능'], [/늘어날\s*수\s*있습니다$/, '증가 가능'],
+    [/줄어들\s*수\s*있습니다$/, '감소 가능'], [/시작하고\s*싶습니다$/, '시작 희망'],
+    [/확인하고\s*싶습니다$/, '확인 희망'], [/받아야\s*합니다$/, ' 요청'], [/필요합니다$/, '필요'],
+    [/가능합니다$/, '가능'], [/가능할까요$/, '가능 여부'], [/올랐습니다$/, '인상'], [/내렸습니다$/, '인하'],
+    [/보고\s*있습니다$/, ''], [/생각하고\s*있습니다$/, '검토 중'], [/예상하고\s*있습니다$/, '예상'],
+    [/하기로\s*(?:했습니다|함|했음)$/, ' 확정'], [/로\s*확정하고$/, ' 확정'], [/으로\s*확정하고$/, ' 확정'],
+    [/할\s*(?:예정|계획)입니다$/, ' 예정'], [/(?:다시\s*)?확인해\s*보겠습니다$/, '확인'],
+    [/맞춰야\s*(?:하니|해서|합니다)$/, ' 필요'],
+    [/가능한지$/, ' 가능 여부'],
+    [/잘\s*받았습니다$/, '수령'], [/받았습니다$/, '수령'], [/받았어요$/, '수령'],
+    [/시작하겠습니다$/, '시작'], [/보내드리겠습니다$/, '발송']
+  ];
+  var KW_FILLER = /^(그러면|그럼|그리고|또한|일단|우선|먼저|자|네|예|좋습니다|감사합니다|알겠습니다|완벽합니다|정리하면|문제 없습니다|좋아요|그렇게 하겠습니다)[,.!]?\s*/;
+
+  function kwLabelOf(text) {
+    var t = String(text || '');
+    var best = '', bestScore = -1, bestIdx = 1e9;
+    KW_RULES.forEach(function (r) {
+      var m = t.match(r.re);
+      if (!m) return;
+      var sc = 1;
+      if (m.index === 0) sc += 2;
+      if (KW_PARTICLE_RE.test(t.slice(m.index + m[0].length))) sc += 3;
+      if (sc > bestScore || (sc === bestScore && m.index < bestIdx)) { best = r.kw; bestScore = sc; bestIdx = m.index; }
+    });
+    return best;
+  }
+
+  function kwSplitSent(text) {
+    return String(text || '').split(/(?<=[.!?。？！])\s+|\s*;\s*/)
+      .map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 1; });
+  }
+
+  function kwSplitClause(text) {
+    return String(text || '').split(/\s*[,·]\s*/).map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+
+  function kwScore(text, kw) {
+    var s = 0;
+    if (KW_NUM_RE.test(text)) s += 3;
+    if (KW_DUE_RE.test(text)) s += 3;
+    if (KW_VERB_RE.test(text)) s += 2;
+    if (kw && text.indexOf(kw) >= 0) s += 2;
+    if (text.length > 46) s -= 1;
+    return s;
+  }
+
+  function kwPolish(text) {
+    var s = String(text || '').replace(/\s+/g, ' ').trim();
+    s = s.replace(KW_FILLER, '');
+    s = s.replace(/^(오늘|이번)\s*(회의는|회의에서는|미팅은|안건은)\s*/, '');
+    s = s.replace(/기준에\s*맞춰야\s*(?:해서|하니|합니다)/, '기준 필요 ·');
+    s = s.replace(/(?:이|가)\s*가능한지/, ' 가능 여부');
+    s = s.replace(/\s*[.!?。？！]+$/, '');
+    s = s.replace(/([가-힣])만$/, '$1');
+    for (var pass = 0; pass < 4; pass++) {
+      var hit = false;
+      for (var i = 0; i < KW_TAIL.length; i++) {
+        if (KW_TAIL[i][0].test(s)) { s = s.replace(KW_TAIL[i][0], KW_TAIL[i][1]); hit = true; break; }
+      }
+      if (!hit) break;
+    }
+    s = s.replace(/([가-힣])겠습니다$/, '$1')
+      .replace(/([가-힣])했습니다$/, '$1')
+      .replace(/([가-힣])습니다$/, '$1')
+      .replace(/([가-힣])입니다$/, '$1')
+      .replace(/([가-힣])합니다$/, '$1')
+      .replace(/([가-힣])됩니다$/, '$1')
+      .replace(/([가-힣])는데$/, '$1')
+      .replace(/([가-힣])겠$/, '$1')
+      .replace(/([가-힣])했$/, '$1')
+      .replace(/([가-힣])하$/, '$1')
+      .replace(/(하고|하며|이고)$/, '')
+      .replace(/(은|는|이|가|을|를|의|도)$/, '');
+    s = s.replace(/\s*이\s+(가능 여부|조정 가능|증가 가능)$/, ' $1');
+    return s.replace(/\s+/g, ' ').replace(/^[,·\s]+|[,·\s]+$/g, '');
+  }
+
+  function kwValueOf(clause, kw) {
+    var v = kwPolish(clause);
+    if (kw) {
+      var esc = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      v = v.replace(new RegExp('^' + esc + '\\s*(은|는|이|가|을|를|의|도|에는|에서는)\\s+'), '');
+      v = v.replace(new RegExp('^' + esc + '[가-힣]{0,1}(은|는|이|가|을|를|의|도)\\s+'), '');
+      v = v.replace(new RegExp('^' + esc + '\\s+'), '');
+      v = v.replace(/^조건은\s+/, '');
+    }
+    if (v.length > 60) {
+      var cut = v.slice(0, 60), at = Math.max(cut.lastIndexOf(' '), cut.lastIndexOf('·'));
+      v = (at > 26 ? cut.slice(0, at) : cut).replace(/[,·\s]+$/, '') + '…';
+    }
+    return v;
+  }
+
+  /* 발언 → 절 단위 키워드 아이템 */
+  function kwItemsOf(entries, flags) {
+    flags = flags || {};
+    var items = [], sid = 0;
+    (entries || []).forEach(function (e, ei) {
+      kwSplitSent(pickText(e)).forEach(function (sent) {
+        sid++;
+        var mySid = sid;
+        kwSplitClause(sent).forEach(function (cl) {
+          var kw = kwLabelOf(cl);
+          var v = kwValueOf(cl, kw);
+          if (!v || v.length < 2) return;
+          var s = kwScore(cl, kw);
+          if (flags.dec && flags.dec.test(cl)) s += 3;
+          if (flags.todo && flags.todo(cl)) s += 2;
+          if (e.star) s += 6;
+          items.push({ t: cl, kw: kw, v: v, s: s, ei: ei, sid: mySid, star: !!e.star, spk: e.spk });
+        });
+      });
+    });
+    return items;
+  }
+
+  /* 같은 문장 안의 수치·일정 보충 절을 한 줄에 붙인다 */
+  function kwBulletValue(item, items) {
+    var parts = [item.v];
+    (items || []).forEach(function (y) {
+      if (y === item || y.sid !== item.sid || !y.v) return;
+      if (y.kw && y.kw !== item.kw) return;
+      if (!(KW_NUM_RE.test(y.t) || KW_DUE_RE.test(y.t))) return;
+      if (parts.length >= 2) return;
+      if (parts.join(' ').indexOf(y.v) >= 0) return;
+      if ((parts.join(' · ') + y.v).length > 78) return;
+      parts.push(y.v);
+    });
+    return parts.join(' · ');
+  }
+
+  function kwBullet(item, items) {
+    var body = kwBulletValue(item, items);
+    return (item.kw ? item.kw + ': ' : '') + body;
+  }
+
+  /* 주제어가 없는 액션 절은 동작 자체를 라벨로 쓴다 (To-do 전용) */
+  function kwActionLabel(t) {
+    t = String(t || '');
+    if (/(발송|송부|보내|배송)/.test(t)) return '발송';
+    if (/(회신|답변|응답)/.test(t)) return '회신';
+    if (/(공유|알려|전달|보고)/.test(t)) return '공유';
+    if (/(검토|확인|검수)/.test(t)) return '확인';
+    if (/(정리|작성|등록)/.test(t)) return '정리';
+    if (/(진행|추진|세팅)/.test(t)) return '진행';
+    if (/(요청|부탁)/.test(t)) return '요청';
+    return '';
+  }
+
+  /* 키워드별로 한 줄씩, 점수 높은 절을 뽑아 발언 순서로 */
+  function kwPick(items, cap, maxPer, labelOf) {
+    var by = {}, picked = [];
+    items.forEach(function (x) {
+      var key = labelOf ? labelOf(x) : x.kw;
+      if (!key) return;
+      var n = by[key] || 0;
+      if (n >= (maxPer || 1)) return;
+      by[key] = n + 1;
+      picked.push(x);
+    });
+    picked.sort(function (a, b) { return b.s - a.s || a.ei - b.ei; });
+    return picked.slice(0, cap).sort(function (a, b) { return a.ei - b.ei; });
+  }
+
+  function kwTop(items, cap) {
+    var w = {}, order = [];
+    (items || []).forEach(function (x) {
+      if (!x.kw) return;
+      if (!w[x.kw]) { w[x.kw] = 0; order.push(x.kw); }
+      w[x.kw] += 1 + Math.max(0, x.s) * 0.5 + (x.star ? 3 : 0);
+    });
+    return order.sort(function (a, b) { return w[b] - w[a]; }).slice(0, cap || 6);
+  }
+
+  /* "키워드: 내용" 문자열 분해 (UI·문서 공용) */
+  function kwParts(text) {
+    var t = String(text || '').trim();
+    var m = t.match(/^([^:：]{1,16})[:：]\s*(.+)$/);
+    if (m && m[2].length > 1) return { kw: m[1].trim(), body: m[2].trim() };
+    return { kw: '', body: t };
+  }
+
+  function kwFromSummary(s) {
+    if (!s) return [];
+    if (Array.isArray(s.keywords) && s.keywords.length) return s.keywords.slice(0, 6);
+    var seen = [], out = [];
+    (s.agenda || []).concat(s.decisions || []).concat(s.highlights || [])
+      .concat((s.actions || []).map(function (a) { return (a && a.task) || ''; }))
+      .forEach(function (t) {
+        var kw = kwParts(t).kw || kwLabelOf(t);
+        if (kw && seen.indexOf(kw) < 0) { seen.push(kw); out.push(kw); }
+      });
+    return out.slice(0, 6);
+  }
+
+  /* ── 키워드 요약 UI 조각 ─────────────────────────────────── */
+  function kwChipsHTML(list, cls) {
+    list = (list || []).filter(Boolean);
+    if (!list.length) return '';
+    return '<div class="kw-chips' + (cls ? ' ' + cls : '') + '">' +
+      list.map(function (k) { return '<span class="kw-chip">#' + esc(k) + '</span>'; }).join('') + '</div>';
+  }
+
+  function kwTagHTML(kw) {
+    return kw ? '<b class="kw-label">' + esc(kw) + '</b>' : '';
+  }
+
+  function kwBulletHTML(text) {
+    var p = kwParts(text);
+    return '<li>' + kwTagHTML(p.kw) + '<span>' + esc(p.body) + '</span></li>';
+  }
+
+  function kwDedupeActions(list) {
+    var seen = {};
+    return (list || []).filter(function (a) {
+      var k = normKey((a && a.task) || '').slice(0, 40);
+      if (!k || seen[k]) return false;
+      seen[k] = 1;
+      return true;
+    });
+  }
+
+  function kwTaskText(value, due) {
+    var t = String(value || '');
+    if (due) t = t.split(due).join(' ');
+    t = t.replace(/\s*(다음|이번|이달|다음달|금주|차주)\s*$/, ' ');
+    return t.replace(/\s*(요청|부탁)\s*$/, '').replace(/\s+/g, ' ').replace(/[,·\s]+$/, '').trim();
+  }
+
   function cleanLine(text) {
     return String(text || '')
       .replace(/^(네|예|좋습니다|알겠습니다|그렇게 하겠습니다|감사합니다|완벽합니다)[,.!。]?\s+/, '')
@@ -2455,10 +2751,9 @@ ul.clean.emph li::before{background:var(--amber)}
 
   function ruleSummary(meeting) {
     var entries = meeting.entries || [];
-    var allText = entries.map(function (e) { return (e.src || '') + ' ' + (e.dst || ''); }).join(' ');
     if (!entries.length) {
       return {
-        mode: 'rule',
+        mode: 'rule', keywords: [],
         oneLiner: '기록된 발언이 없습니다.',
         agenda: [], decisions: [], actions: [], expressions: [],
         stats: { total: 0, en: 0, ko: 0, starred: 0 }
@@ -2468,59 +2763,54 @@ ul.clean.emph li::before{background:var(--amber)}
     var koCount = entries.length - enCount;
     var starred = entries.filter(function (e) { return e.star; });
 
-    // 점수화: 업무 키워드 + 결정/액션 표지 + 별표
-    var scored = entries.map(function (e) {
-      var text = (e.src || '') + ' ' + (e.dst || '');
-      var s = 0;
-      KEYWORDS.forEach(function (k) { if (new RegExp('\\b' + k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(text)) s += 2; });
-      if (DECISION_RE.test(text)) s += 3;
-      if (ACTION_RE.test(text)) s += 2;
-      if (e.star) s += 5;
-      if ((e.src || '').length > 40) s += 1;
-      return { e: e, s: s };
-    });
+    // 바람·감사 표현은 액션이 아니다 ("~하고 싶습니다")
+    function isAction(t) {
+      var x = String(t || '').replace(/[.!?。？！\s]+$/, '');
+      if (/(싶습니다|희망|감사|필요|가능|여부)(합니다|입니다|입니다만|합니다만)?$/.test(x) && !KW_DUE_RE.test(x)) return false;
+      return ACTION_RE.test(x);
+    }
+    var items = kwItemsOf(entries, { dec: DECISION_RE, todo: isAction });
+    var keywords = kwTop(items, 6);
 
-    var top = scored.slice().sort(function (a, b) { return b.s - a.s; })[0];
-    var oneLiner = top ? truncate(cleanLine(pickText(top.e)), 110) : '(요약할 발언이 없습니다)';
+    var decItems = items.filter(function (x) { return DECISION_RE.test(x.t); });
+    var actItems = items.filter(function (x) { return isAction(x.t) && !DECISION_RE.test(x.t); });
+    var rest = items.filter(function (x) { return !DECISION_RE.test(x.t) && !isAction(x.t); });
 
-    var agenda = [];
-    var addAgenda = function (text) {
-      var t = cleanLine(text);
-      if (!t || t.length < 10) return;
-      if (oneLiner && overlapRatio(t, oneLiner) > 0.6) return;
-      for (var i = 0; i < agenda.length; i++) if (overlapRatio(t, agenda[i]) > 0.55) return;
-      if (agenda.length < 5) agenda.push(truncate(t, 150));
-    };
-    scored.slice().sort(function (a, b) { return b.s - a.s; }).filter(function (x) { return x.s >= 2; })
-      .forEach(function (x) { addAgenda(pickText(x.e)); });
-    if (!agenda.length) entries.slice(0, 3).forEach(function (e) { addAgenda(pickText(e)); });
+    // 한 줄 핵심 = 가장 중요한 결정 → 핵심 논의 순
+    var pool = decItems.length ? decItems : (rest.length ? rest : items);
+    var top = pool.slice().sort(function (a, b) { return b.s - a.s || a.ei - b.ei; })[0];
+    var oneLiner = top ? truncate(top.v, 100) : '(요약할 발언이 없습니다)';
+    var notTop = function (x) { return x !== top; };
+    rest = rest.filter(notTop);
+    decItems = decItems.filter(notTop);
 
-    var decisions = [];
-    entries.filter(function (e) { return DECISION_RE.test((e.src || '') + ' ' + (e.dst || '')); })
-      .forEach(function (e) {
-        var t = cleanLine(pickText(e));
-        if (!t) return;
-        for (var i = 0; i < decisions.length; i++) if (overlapRatio(t, decisions[i]) > 0.55) return;
-        if (decisions.length < 6) decisions.push(truncate(t, 160));
+    var agenda = kwPick(rest, 5, 1).map(function (x) { return kwBullet(x, items); });
+    if (agenda.length < 3) {
+      items.slice().sort(function (a, b) { return b.s - a.s || a.ei - b.ei; }).forEach(function (x) {
+        if (agenda.length >= 3) return;
+        var b = kwBullet(x, items);
+        if (agenda.indexOf(b) >= 0) return;
+        agenda.push(b);
       });
+    }
 
-    var actions = [];
-    entries.filter(function (e) { return ACTION_RE.test((e.src || '') + ' ' + (e.dst || '')); })
-      .forEach(function (e) {
-        var t = cleanLine(pickText(e));
-        if (!t) return;
-        for (var i = 0; i < actions.length; i++) if (overlapRatio(t, actions[i].task) > 0.55) return;
-        if (actions.length < 6) actions.push({
-          task: truncate(t, 140),
-          owner: e.spk === 'me' ? '나' : '상대(바이어)',
-          due: extractDue((e.src || '') + ' ' + (e.dst || ''))
-        });
-      });
+    var decisions = kwPick(decItems, 5, 1).map(function (x) { return kwBullet(x, items); });
+
+    var actions = kwDedupeActions(kwPick(actItems, 6, 2, function (x) { return x.kw || kwActionLabel(x.t); }).map(function (x) {
+      var due = extractDue(x.t);
+      return {
+        task: kwTaskText(x.v, due) || x.v,
+        kw: x.kw || kwActionLabel(x.t) || kwLabelOf(x.t),
+        owner: x.spk === 'me' ? '나' : '상대(바이어)',
+        due: due
+      };
+    }));
 
     var expressions = extractExpressions(entries, starred);
 
     return {
       mode: 'rule',
+      keywords: keywords,
       oneLiner: oneLiner,
       agenda: agenda,
       decisions: decisions,
@@ -2565,6 +2855,7 @@ ul.clean.emph li::before{background:var(--amber)}
   function extractDueKo(text) {
     var t = String(text || '');
     var m = t.match(/(다음\s*주|이번\s*주|차주|금주)\s*(월|화|수|목|금|토|일)?\s*요일?\s*까지/) ||
+            t.match(/(이번|다음|이달|다음달|금월|차월)\s*(달|주|월)?\s*(말|초|중순)?\s*까지/) ||
             t.match(/(이번|다음|이달|다음달|금월|차월)\s*(달|월)?\s*(말|초|중순)\s*까지/) ||
             t.match(/\d{1,2}\s*월\s*\d{1,2}\s*일\s*까지/) ||
             t.match(/(오늘|내일|모레|금일|명일)\s*(오전|오후|저녁|밤|점심|퇴근)\s*(까지|전)/) ||
@@ -2590,70 +2881,54 @@ ul.clean.emph li::before{background:var(--amber)}
     var entries = meeting.entries || [];
     var stats = statsOf(meeting);
     if (!entries.length) {
-      return { form: 'minutes', mode: 'rule', oneLiner: '기록된 발언이 없습니다.', agenda: [], decisions: [], actions: [], highlights: [], expressions: [], stats: stats };
+      return { form: 'minutes', mode: 'rule', keywords: [], oneLiner: '기록된 발언이 없습니다.', agenda: [], decisions: [], actions: [], highlights: [], expressions: [], stats: stats };
     }
 
-    function pushUnique(list, t, cap) {
-      if (!t) return false;
-      for (var i = 0; i < list.length; i++) if (overlapRatio(t, list[i]) > 0.62) return false;
-      if (list.length >= cap) return false;
-      list.push(t);
-      return true;
-    }
-
-    // 문장 단위로 쪼개 점수화: 업무 키워드 + 결정 표지 + To-do 표지 + ★
-    var items = [];
-    entries.forEach(function (e) {
-      splitSentences(e.src).forEach(function (sent) {
-        var t = cleanLine(sent);
-        if (!t || t.length < 6) return;
-        var s = 0;
-        KO_BIZ_WORDS.forEach(function (k) { if (t.indexOf(k) >= 0) s += 2; });
-        if (KO_DECISION_RE.test(t)) s += 3;
-        if (isTodoSentence(t)) s += 2;
-        if (e.star) s += 6;
-        if (t.length > 34) s += 1;
-        items.push({ t: t, e: e, s: s, star: !!e.star });
-      });
-    });
+    // 절 단위로 쪼개 [키워드 · 수치/일정 · 액션]만 남긴다
+    var items = kwItemsOf(entries, { dec: KO_DECISION_RE, todo: isTodoSentence });
     if (!items.length) {
-      return { form: 'minutes', mode: 'rule', oneLiner: truncate(cleanLine(entries[0].src), 110), agenda: entries.slice(0, 3).map(function (e) { return truncate(cleanLine(e.src), 150); }), decisions: [], actions: [], highlights: [], expressions: [], stats: stats };
+      return { form: 'minutes', mode: 'rule', keywords: [], oneLiner: truncate(cleanLine(entries[0].src), 110), agenda: entries.slice(0, 3).map(function (e) { return truncate(cleanLine(e.src), 150); }), decisions: [], actions: [], highlights: [], expressions: [], stats: stats };
+    }
+    var keywords = kwTop(items, 6);
+
+    var decItems = items.filter(function (x) { return KO_DECISION_RE.test(x.t); });
+    var todoItems = items.filter(function (x) { return isTodoSentence(x.t) && !KO_DECISION_RE.test(x.t); });
+    var starItems = items.filter(function (x) { return x.star; });
+    var rest = items.filter(function (x) { return !KO_DECISION_RE.test(x.t) && !isTodoSentence(x.t); });
+
+    var pool = decItems.length ? decItems : (rest.length ? rest : items);
+    var top = pool.slice().sort(function (a, b) { return b.s - a.s || a.ei - b.ei; })[0];
+    var oneLiner = top ? truncate(top.v, 100) : truncate(cleanLine(entries[0].src), 110);
+    var notTop = function (x) { return x !== top; };
+    rest = rest.filter(notTop);
+    decItems = decItems.filter(notTop);
+
+    var agenda = kwPick(rest, 5, 1).map(function (x) { return kwBullet(x, items); });
+    if (agenda.length < 3) {
+      items.slice().sort(function (a, b) { return b.s - a.s || a.ei - b.ei; }).forEach(function (x) {
+        if (agenda.length >= 3) return;
+        var b = kwBullet(x, items);
+        if (agenda.indexOf(b) >= 0) return;
+        agenda.push(b);
+      });
     }
 
-    var ranked = items.slice().sort(function (a, b) { return b.s - a.s || a.e.i - b.e.i; });
-    var oneLiner = truncate(ranked[0].t, 120);
+    var decisions = kwPick(decItems, 5, 1).map(function (x) { return kwBullet(x, items); });
 
-    var agenda = [];
-    ranked.forEach(function (x) {
-      if (agenda.length >= 5) return;
-      if (oneLiner && overlapRatio(x.t, oneLiner) > 0.62) return;
-      pushUnique(agenda, truncate(x.t, 170), 5);
-    });
-    if (!agenda.length) entries.slice(0, 3).forEach(function (e) { pushUnique(agenda, truncate(cleanLine(e.src), 150), 3); });
+    var actions = kwDedupeActions(kwPick(todoItems, 8, 2, function (x) { return x.kw || kwActionLabel(x.t); }).map(function (x) {
+      var due = extractDueKo(x.t);
+      return {
+        task: kwTaskText(x.v, due) || x.v,
+        kw: x.kw || kwActionLabel(x.t) || kwLabelOf(x.t),
+        owner: todoOwnerOf(x.t),
+        due: due,
+        done: false
+      };
+    }));
 
-    var decisions = [];
-    items.filter(function (x) { return KO_DECISION_RE.test(x.t); })
-      .sort(function (a, b) { return b.s - a.s || a.e.i - b.e.i; })
-      .forEach(function (x) { pushUnique(decisions, truncate(x.t, 180), 6); });
+    var highlights = kwPick(starItems, 6, 1).map(function (x) { return kwBullet(x, items); });
 
-    var todoTexts = [];
-    var actions = [];
-    items.filter(function (x) { return isTodoSentence(x.t); })
-      .sort(function (a, b) { return (b.star ? 1 : 0) - (a.star ? 1 : 0) || b.s - a.s || a.e.i - b.e.i; })
-      .forEach(function (x) {
-        if (actions.length >= 8) return;
-        var task = todoTask(x.t);
-        if (!task || task.length < 6) return;
-        if (!pushUnique(todoTexts, task, 8)) return;
-        actions.push({ task: task, owner: todoOwnerOf(x.t), due: extractDueKo(x.t), done: false });
-      });
-
-    var highlights = [];
-    items.filter(function (x) { return x.star; })
-      .sort(function (a, b) { return a.e.i - b.e.i; })
-      .forEach(function (x) { pushUnique(highlights, truncate(x.t, 180), 6); });
-
-    return { form: 'minutes', mode: 'rule', oneLiner: oneLiner, agenda: agenda, decisions: decisions, actions: actions, highlights: highlights, expressions: [], stats: stats };
+    return { form: 'minutes', mode: 'rule', keywords: keywords, oneLiner: oneLiner, agenda: agenda, decisions: decisions, actions: actions, highlights: highlights, expressions: [], stats: stats };
   }
 
   function pickText(e) {
@@ -2666,9 +2941,10 @@ ul.clean.emph li::before{background:var(--amber)}
   function extractDue(text) {
     var m = text.match(/\b(by\s+(?:next\s+)?(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|the end of (?:this|next)?\s*(?:week|month))|by\s+\d{1,2}(?:st|nd|rd|th)?\b|next\s+week|next\s+month|end of (?:this|next)?\s*(?:week|month))/i);
     if (m) return m[0];
-    var k = text.match(/([가-힣0-9]{0,6}\s?까지)/);
-    if (k) return k[0].trim();
-    return '';
+    var k = extractDueKo(text);
+    if (k) return k;
+    var f = text.match(/([가-힣0-9]{0,6}\s?까지)/);
+    return f ? f[0].trim() : '';
   }
 
   function extractExpressions(entries, starred) {
@@ -2702,21 +2978,28 @@ ul.clean.emph li::before{background:var(--amber)}
     var lines = meeting.entries.map(function (e) {
       return '[' + fmtClock(e.t) + '] ' + (e.spk === 'me' ? '나' : '상대') + ' (' + LANG_TAG[e.lang] + ') ' + e.src + ' / ' + (e.dst || '');
     }).join('\n');
-    return '아래는 비즈니스 미팅의 실시간 자막 기록입니다. 다음 5가지를 한국어로 정리해 주세요.\n' +
-      '1) 한 줄 핵심 요약\n2) 주요 논의 안건 (3~5개)\n3) 결정 사항\n4) Action Items (담당 / 기한)\n' +
+    return '아래는 비즈니스 미팅의 실시간 자막 기록입니다. 장황한 문장 대신 **키워드 중심의 짧고 직관적인 요약**으로 한국어로 정리해 주세요.\n' +
+      '0) 핵심 키워드 3~6개 (한 단어 명사: 예 단가·납기·샘플·포장·결제)\n' +
+      '1) 한 줄 핵심 (50자 이내, 수치는 그대로)\n' +
+      '2) 주요 논의 3~5개 — 각 항목은 `키워드: 핵심 내용` (예 `납기: 12/10 상차 확정`)\n' +
+      '3) 결정 사항 — 같은 `키워드: 내용` 형식\n' +
+      '4) Action Items — 할 일 / 담당 / 기한(언급된 경우만)\n' +
       '5) 학습할 만한 고급 비즈니스 영어 표현 5~10개 (원문 · 한국어 뜻 · 비즈니스 뉘앙스 · 대체 표현)\n\n' +
       '회의: ' + meeting.title + ' / ' + new Date(meeting.startedAt).toLocaleString('ko-KR') + '\n\n' + lines;
   }
 
   var MINUTES_SYSTEM_PROMPT = 'You write Korean meeting minutes (회의록) for DAELIMBATH, a Korean bathroom-fixture manufacturer. ' +
     'Read the Korean transcript and reply with JSON only, in Korean. Schema: ' +
-    '{"oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "owner": string, "due": string}], "highlights": string[]}. ' +
-    'oneLiner: the meeting in one Korean sentence, max 60 chars. ' +
-    'agenda: 3-6 main discussion points actually talked about, one sentence each. ' +
-    'decisions: only what was actually agreed or confirmed (empty array if none). ' +
-    'actions: 2-8 concrete To-do items, task written as a short Korean action (e.g. "수정 견적서 발송하기"), ' +
+    '{"keywords": string[], "oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "kw": string, "owner": string, "due": string}], "highlights": string[]}. ' +
+    'Write KEYWORD-STYLE, not prose: every agenda/decisions/highlights item must be the short form "키워드: 핵심 내용" ' +
+    '(a topic noun, a colon, then only the number/date/decision, e.g. "납기: 12/10 상차 확정", "단가: 2% 분담, 11/23 회신", "샘플: 다음 주 화요일까지 2세트"). ' +
+    'Each item max 34 Korean characters, no full sentences, no greetings or filler. ' +
+    'keywords: 3-6 single topic nouns covering the meeting (e.g. "단가","납기","샘플","포장","결제"), no sentences, no duplicates. ' +
+    'oneLiner: the meeting in one short Korean keyword-style phrase, max 50 chars, numbers included when they are the point. ' +
+    'agenda: 3-6 discussion points actually talked about. decisions: only what was actually agreed or confirmed (empty array if none). ' +
+    'actions: 2-8 concrete To-do items; task is a short Korean noun phrase (e.g. "수정 견적서 발송"), kw is its topic noun, ' +
     'due only when the transcript states a deadline (e.g. "다음 주 화요일까지"), otherwise ""; owner only when clear ("나"/"상대"/"담당자"), otherwise "". ' +
-    'highlights: up to 5 sentences that were marked ★ or that carry the key decision/number. Never translate; do not add anything not in the transcript.';
+    'highlights: up to 5 items that were marked ★ or that carry the key decision/number. Never translate; do not add anything not in the transcript.';
 
   function transcriptLines(meeting, minutes) {
     return (meeting.entries || []).map(function (e) {
@@ -2751,10 +3034,14 @@ ul.clean.emph li::before{background:var(--amber)}
             role: 'system',
             content: 'You are a senior business meeting analyst for a Korean bathroom-fixture manufacturer (DAELIMBATH) that sells to overseas buyers. ' +
               'Read the bilingual transcript and reply with JSON only, in Korean (English original for expressions). Schema: ' +
-              '{"oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "owner": string, "due": string}], ' +
+              '{"keywords": string[], "oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "kw": string, "owner": string, "due": string}], ' +
               '"expressions": [{"en": string, "ko": string, "nuance": string, "alt": string}]}. ' +
-              'oneLiner: one sentence, max 60 Korean chars. agenda: 3-5 items. decisions: concrete agreements only (empty array if none). ' +
-              'actions: concrete follow-ups with owner (나/상대/담당자) and due date if mentioned, else "". ' +
+              'Write KEYWORD-STYLE, not prose: every agenda/decisions item must be the short form "키워드: 핵심 내용" ' +
+              '(a topic noun, a colon, then only the number/date/decision, e.g. "납기: 45일, 성수기 60일", "단가: 개당 4.85달러", "샘플: 다음 주까지 2세트"). ' +
+              'Each item max 34 Korean characters, no full sentences, no greetings or filler. ' +
+              'keywords: 3-6 single topic nouns covering the meeting (e.g. "단가","납기","샘플","수량","결제"), no sentences, no duplicates. ' +
+              'oneLiner: one short Korean keyword-style phrase, max 50 chars. agenda: 3-5 items. decisions: concrete agreements only (empty array if none). ' +
+              'actions: concrete follow-ups; task a short Korean noun phrase, kw its topic noun, owner (나/상대/담당자), due date if mentioned, else "". ' +
               'expressions: 5-10 advanced business English phrases actually used in the transcript, with Korean meaning, nuance in Korean, and one alternative phrase.'
           },
           { role: 'user', content: '회의: ' + meeting.title + '\n\n' + transcript }
@@ -2766,27 +3053,48 @@ ul.clean.emph li::before{background:var(--amber)}
       } catch (e) {
         throw new Error('요약 JSON 해석 실패');
       }
+      // GPT가 keywords를 빠뜨리면 자막에서 직접 뽑는다
+      var fallbackKw = kwTop(kwItemsOf(meeting.entries, {
+        dec: minutes ? KO_DECISION_RE : DECISION_RE,
+        todo: minutes ? isTodoSentence : function (t) { return ACTION_RE.test(t); }
+      }), 6);
+      var gptKw = Array.isArray(data.keywords)
+        ? data.keywords.map(function (k) { return String(k || '').replace(/^#/, '').trim(); })
+            .filter(function (k) { return k && k.length <= 14; }).slice(0, 6)
+        : [];
+      var kws = gptKw.length ? gptKw : fallbackKw;
       if (minutes) {
         meeting.summary = {
           form: 'minutes',
           mode: 'gpt',
+          keywords: kws,
           oneLiner: String(data.oneLiner || '').trim() || '요약을 생성했습니다.',
-          agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6) : [],
-          decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6) : [],
+          agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6).map(String) : [],
+          decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6).map(String) : [],
           actions: Array.isArray(data.actions) ? data.actions.slice(0, 8).map(function (a) {
-            return { task: String((a && a.task) || ''), owner: String((a && a.owner) || ''), due: String((a && a.due) || ''), done: !!(a && a.done) };
+            return {
+              task: String((a && a.task) || ''), kw: String((a && a.kw) || ''),
+              owner: String((a && a.owner) || ''), due: String((a && a.due) || ''), done: !!(a && a.done)
+            };
           }) : [],
-          highlights: Array.isArray(data.highlights) ? data.highlights.slice(0, 6) : [],
+          highlights: Array.isArray(data.highlights) ? data.highlights.slice(0, 6).map(String) : [],
           expressions: [],
           stats: statsOf(meeting)
         };
       } else {
         meeting.summary = {
           mode: 'gpt',
+          keywords: kws,
           oneLiner: String(data.oneLiner || '').trim() || '요약을 생성했습니다.',
-          agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6) : [],
-          decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6) : [],
-          actions: Array.isArray(data.actions) ? data.actions.slice(0, 8) : [],
+          agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6).map(String) : [],
+          decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6).map(String) : [],
+          actions: Array.isArray(data.actions) ? data.actions.slice(0, 8).map(function (a) {
+            if (typeof a === 'string') return { task: a, kw: kwLabelOf(a), owner: '', due: '', done: false };
+            return {
+              task: String((a && a.task) || ''), kw: String((a && a.kw) || kwLabelOf(String((a && a.task) || ''))),
+              owner: String((a && a.owner) || ''), due: String((a && a.due) || ''), done: !!(a && a.done)
+            };
+          }) : [],
           expressions: Array.isArray(data.expressions) ? data.expressions.slice(0, 10) : [],
           stats: statsOf(meeting)
         };
@@ -3145,6 +3453,7 @@ ul.clean.emph li::before{background:var(--amber)}
         '<div class="mc-meta"><span>' + fmtShort(d) + '</span><span>' + fmtDur(m.durationMs || 0) + '</span><span>' + (m.entries || []).length + '개 발언</span>' + audio +
           (exprCount ? '<span>표현 ' + exprCount + '</span>' : '') + '</div>' +
         (one ? '<p class="mc-one">' + esc(one) + '</p>' : '') +
+        (m.summary ? kwChipsHTML(kwFromSummary(m.summary).slice(0, 3), 'tiny') : '') +
       '</div></article>';
   }
 
@@ -3212,19 +3521,21 @@ ul.clean.emph li::before{background:var(--amber)}
     var todoRows = todos.map(function (a, i) {
       var done = !!a.done;
       return '<div class="action-item"><span class="action-check ' + (done ? 'on' : '') + '" data-act="toggle-action" data-id="' + m.id + '" data-idx="' + i + '" role="checkbox" aria-checked="' + (done ? 'true' : 'false') + '">' + I.check + '</span>' +
-        '<div class="action-body"><b style="' + (done ? 'opacity:.55;text-decoration:line-through' : '') + '">' + esc(a.task || '') + '</b>' +
+        '<div class="action-body"><div class="action-head">' + kwTagHTML(a.kw || kwLabelOf(a.task || '')) +
+        '<b class="action-task" style="' + (done ? 'opacity:.55;text-decoration:line-through' : '') + '">' + esc(a.task || '') + '</b></div>' +
         '<div class="action-meta">' + (a.owner ? '<span>' + esc(a.owner) + '</span>' : '') +
         (a.due ? '<span>' + esc(a.due) + '</span>' : '') +
         '<span>' + (done ? '완료' : '미완료') + '</span></div></div></div>';
     }).join('');
-    return '<section class="card summary-block minutes-block">' +
+    return '<section class="card summary-block minutes-block kw-overview">' +
         '<h2>' + I.doc + ' 1. 주요사항 요약</h2>' +
+        kwChipsHTML(kwFromSummary(s)) +
         '<p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
         '<div class="mb-sub">주요 논의</div>' +
-        (agenda.length ? '<ul class="clean">' + agenda.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p class="small dim">정리된 논의가 없습니다.</p>') +
+        (agenda.length ? '<ul class="clean kwlist">' + agenda.map(kwBulletHTML).join('') + '</ul>' : '<p class="small dim">정리된 논의가 없습니다.</p>') +
         '<div class="mb-sub">결정 사항</div>' +
-        (decisions.length ? '<ul class="clean em">' + decisions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p class="small dim">명시적으로 확정된 사항은 없습니다.</p>') +
-        (highlights.length ? '<div class="mb-sub">★ 중요 표시</div><ul class="clean emph">' + highlights.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '') +
+        (decisions.length ? '<ul class="clean kwlist em">' + decisions.map(kwBulletHTML).join('') + '</ul>' : '<p class="small dim">명시적으로 확정된 사항은 없습니다.</p>') +
+        (highlights.length ? '<div class="mb-sub">★ 중요 표시</div><ul class="clean kwlist emph">' + highlights.map(kwBulletHTML).join('') + '</ul>' : '') +
       '</section>' +
       '<section class="card summary-block minutes-block">' +
         '<h2>' + I.check + ' 2. To-do <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + todos.length + '</span></h2>' +
@@ -3246,17 +3557,22 @@ ul.clean.emph li::before{background:var(--amber)}
         (saved ? I.check + ' 저장됨' : I.plus + ' 스터디') + '</button></div>';
     }).join('');
     var actions = (s.actions || []).map(function (a, i) {
-      return '<div class="action-item"><span class="action-check ' + (a.done ? 'on' : '') + '" data-act="toggle-action" data-id="' + m.id + '" data-idx="' + i + '" role="checkbox" aria-checked="' + (a.done ? 'true' : 'false') + '">' + I.check + '</span>' +
-        '<div class="action-body"><b style="' + (a.done ? 'opacity:.55;text-decoration:line-through' : '') + '">' + esc(a.task || a) + '</b>' +
+      var task = typeof a === 'string' ? a : (a.task || '');
+      var done = !!(a && a.done);
+      return '<div class="action-item"><span class="action-check ' + (done ? 'on' : '') + '" data-act="toggle-action" data-id="' + m.id + '" data-idx="' + i + '" role="checkbox" aria-checked="' + (done ? 'true' : 'false') + '">' + I.check + '</span>' +
+        '<div class="action-body"><div class="action-head">' + kwTagHTML((a && a.kw) || kwParts(task).kw || kwLabelOf(task)) +
+        '<b class="action-task" style="' + (done ? 'opacity:.55;text-decoration:line-through' : '') + '">' + esc(kwParts(task).kw ? kwParts(task).body : task) + '</b></div>' +
         '<div class="action-meta">' + (a.owner ? '<span>' + esc(a.owner) + '</span>' : '') + (a.due ? '<span>' + esc(a.due) + '</span>' : '') + '</div></div></div>';
     }).join('');
-    return '<section class="card summary-block">' +
-        '<h2>' + I.target + ' 한 줄 핵심</h2><p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
+    return '<section class="card summary-block kw-overview">' +
+        '<h2>' + I.target + ' 한눈에 보기</h2>' +
+        kwChipsHTML(kwFromSummary(s)) +
+        '<p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
       '</section>' +
       '<section class="card summary-block"><h2>' + I.list + ' 주요 논의 안건</h2>' +
-        (s.agenda && s.agenda.length ? '<ul class="clean">' + s.agenda.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p class="small dim">정리된 안건이 없습니다.</p>') + '</section>' +
+        (s.agenda && s.agenda.length ? '<ul class="clean kwlist">' + s.agenda.map(kwBulletHTML).join('') + '</ul>' : '<p class="small dim">정리된 안건이 없습니다.</p>') + '</section>' +
       '<section class="card summary-block"><h2>' + I.flag + ' 결정 사항</h2>' +
-        (s.decisions && s.decisions.length ? '<ul class="clean em">' + s.decisions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p class="small dim">명시적으로 확정된 사항은 없습니다.</p>') + '</section>' +
+        (s.decisions && s.decisions.length ? '<ul class="clean kwlist em">' + s.decisions.map(kwBulletHTML).join('') + '</ul>' : '<p class="small dim">명시적으로 확정된 사항은 없습니다.</p>') + '</section>' +
       '<section class="card summary-block"><h2>' + I.check + ' 액션 아이템 <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + (s.actions || []).length + '</span></h2>' +
         (s.actions && s.actions.length ? actions : '<p class="small dim">다음 단계로 정해진 항목이 없습니다.</p>') + '</section>' +
       '<section class="card summary-block"><h2>' + I.spark + ' 배울 만한 비즈니스 표현 <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + (s.expressions || []).length + '</span></h2>' +
@@ -3290,8 +3606,10 @@ ul.clean.emph li::before{background:var(--amber)}
     var decisions = s.decisions || [];
     var highlights = s.highlights || [];
 
+    var keywords = kwFromSummary(s);
     var infoRows = [
       ['회의 제목', m.title || ''] ,
+      ['핵심 키워드', keywords.length ? keywords.join(' · ') : '-'],
       ['일시', fmtDate(d) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes())],
       ['소요시간', fmtDur(m.durationMs || 0)],
       ['발언 수', entries.length + '건'],
@@ -3303,21 +3621,32 @@ ul.clean.emph li::before{background:var(--amber)}
       return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
     }).join('');
 
+    function docKwLi(text) {
+      var p = kwParts(text);
+      return '<li>' + (p.kw ? '<b class="kw">' + esc(p.kw) + '</b> ' : '') + esc(p.body) + '</li>';
+    }
     var agendaHTML = agenda.length
-      ? '<ul>' + agenda.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>'
+      ? '<ul class="kwul">' + agenda.map(docKwLi).join('') + '</ul>'
       : '<p class="none">정리된 논의가 없습니다.</p>';
     var decisionsHTML = decisions.length
-      ? '<ul>' + decisions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>'
-      : '<p class="none">명시적으로 확정된 사항은 없습니다.</p>';
+      ? '<ul class="kwul">' + decisions.map(docKwLi).join('') + '</ul>'
+      : '<p class="none">명시적으로 확정된 사항이 없습니다.</p>';
     var highlightsHTML = highlights.length
-      ? '<h3>★ 중요 표시</h3><ul>' + highlights.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>'
+      ? '<h3>★ 중요 표시</h3><ul class="kwul">' + highlights.map(docKwLi).join('') + '</ul>'
+      : '';
+    var kwLineHTML = keywords.length
+      ? '<div class="kwline">' + keywords.map(function (k) { return '<span class="kwchip">#' + esc(k) + '</span>'; }).join('') + '</div>'
       : '';
 
     var todoHTML = todos.length
-      ? '<table class="todo"><thead><tr><th style="width:17%">완료 여부</th><th>할 일</th><th style="width:22%">기한</th></tr></thead><tbody>' +
+      ? '<table class="todo"><thead><tr><th style="width:15%">완료 여부</th><th style="width:16%">키워드</th><th>할 일</th><th style="width:20%">기한</th></tr></thead><tbody>' +
         todos.map(function (a) {
+          var task = String((a && a.task) || '');
+          var kw = (a && a.kw) || kwParts(task).kw || kwLabelOf(task);
+          if (kwParts(task).kw) task = kwParts(task).body;
           return '<tr><td class="' + (a.done ? 'done' : 'todo') + '">' + (a.done ? '☑ 완료' : '☐ 미완료') + '</td>' +
-            '<td>' + esc(a.task || '') + (a.owner ? ' <span class="owner">(' + esc(a.owner) + ')</span>' : '') + '</td>' +
+            '<td class="kwcell">' + (kw ? '#' + esc(kw) : '-') + '</td>' +
+            '<td>' + esc(task) + (a.owner ? ' <span class="owner">(' + esc(a.owner) + ')</span>' : '') + '</td>' +
             '<td>' + esc(a.due || '-') + '</td></tr>';
         }).join('') + '</tbody></table>'
       : '<p class="none">To-do가 정리되지 않았습니다.</p>';
@@ -3353,11 +3682,17 @@ ul.clean.emph li::before{background:var(--amber)}
         'table.log td.t{width:13%;color:#6B7280;font-family:Consolas,monospace;font-size:8.5pt;white-space:nowrap}' +
         'table.log .tr{color:#4B5563;font-size:9pt;margin-top:2pt}' +
         '.star{color:#B45309}' +
+        '.kwline{margin:0 0 12pt}' +
+        '.kwchip{display:inline-block;margin:0 4pt 3pt 0;padding:1.5pt 6pt;border:0.75pt solid #6EE7B7;background:#ECFDF5;color:#065F46;font-size:9pt;font-weight:bold}' +
+        'b.kw{color:#065F46}' +
+        'ul.kwul li{margin:0 0 4pt}' +
+        'td.kwcell{color:#065F46;font-weight:bold;font-size:9pt}' +
         '.foot{margin-top:20pt;color:#9CA3AF;font-size:8pt;border-top:0.5pt solid #E5E7EB;padding-top:6pt}' +
       '</style></head><body>' +
       '<h1>회의록</h1>' +
       '<div class="sub">' + esc(m.title || '') + ' · 미팅메이트</div>' +
       '<table class="info">' + infoHTML + '</table>' +
+      kwLineHTML +
       '<h2>1. 주요사항 요약</h2>' +
       '<p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
       '<h3>주요 논의</h3>' + agendaHTML +
