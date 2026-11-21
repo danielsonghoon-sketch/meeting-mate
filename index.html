@@ -680,7 +680,7 @@ ul.clean.em li::before{background:var(--emerald)}
 (function () {
   'use strict';
 
-  var BUILD = 'a70bbdb30a';
+  var BUILD = 'aa0f40b343';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -1449,8 +1449,7 @@ ul.clean.em li::before{background:var(--emerald)}
       return;
     }
     rt.speaker = spk;
-    rt.interim = '';
-    renderInterim();
+    clearInterim();
     $$('.spk').forEach(function (b) {
       b.setAttribute('aria-pressed', b.getAttribute('data-spk') === spk ? 'true' : 'false');
     });
@@ -1870,6 +1869,13 @@ ul.clean.em li::before{background:var(--emerald)}
   function scheduleInterimTranslation() {
     var text = (rt.interim || '').trim();
     if (!text) { renderInterim(); return; }
+    // 앞 문장과 이어지지 않는 새 발화면 이전 번역을 지운다 (엉뚱한 번역이 붙지 않도록)
+    var prev = rt.interimReq;
+    if (prev && text.indexOf(prev) !== 0 && prev.indexOf(text) !== 0) {
+      rt.interimDst = '';
+      rt.interimErr = '';
+      rt.interimReq = '';
+    }
     var dir = directionFor(text, langOf(rt.interimSpk));
     var cached = trCache.get(dir.sl + '>' + dir.tl + '|' + text);
     if (cached) {
