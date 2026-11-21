@@ -244,6 +244,44 @@ label.field{display:block;font-size:12px;font-weight:700;color:var(--muted);marg
 .dir-swap b{font-weight:800;color:var(--txt-2)}
 .dir-swap svg{width:14px;height:14px;flex:0 0 14px}
 
+/* ── 회의 모드 (한국어 회의록 · 실시간 통역) ──────────────── */
+.mode-picker{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+.mode-opt{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;
+  padding:9px 11px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.025);color:var(--txt-2);cursor:pointer;transition:.15s;
+  text-align:left;min-width:0;
+}
+.mode-opt b{font-size:12.5px;font-weight:800;letter-spacing:-.01em;line-height:1.3;white-space:nowrap}
+.mode-opt span{font-size:9.5px;font-weight:700;letter-spacing:.02em;color:var(--dim);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.mode-opt:hover{border-color:#33476a;color:#fff}
+.mode-opt.ko[aria-pressed="true"]{
+  background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.62);color:#E9FBF4;
+  box-shadow:0 0 0 1px rgba(16,185,129,.42), 0 10px 24px -20px rgba(16,185,129,1);
+}
+.mode-opt.ko[aria-pressed="true"] b{color:#C6F7E4}
+.mode-opt.ko[aria-pressed="true"] span{color:#7FE3BE}
+.mode-opt.tr[aria-pressed="true"]{
+  background:rgba(99,102,241,.16);border-color:rgba(99,102,241,.6);color:#E9EAFF;
+  box-shadow:0 0 0 1px rgba(99,102,241,.45), 0 10px 24px -20px rgba(99,102,241,1);
+}
+.mode-opt.tr[aria-pressed="true"] b{color:#EFEFFF}
+.mode-opt.tr[aria-pressed="true"] span{color:#A5B4FC}
+.dir-wrap.minutes .minutes-bar{margin-top:2px}
+.minutes-bar{display:flex;align-items:center;gap:7px;margin-top:8px;flex-wrap:wrap}
+.minutes-bar .mb-dot{width:7px;height:7px;border-radius:50%;background:var(--emerald);box-shadow:0 0 0 4px rgba(16,185,129,.16);flex:0 0 7px}
+.minutes-bar b{font-size:11.5px;font-weight:800;color:#C6F7E4;letter-spacing:-.01em}
+.minutes-bar .hint{flex:1 1 160px;min-width:0;font-size:11px;color:var(--dim);line-height:1.4}
+.session.ko-minutes .minutes-bar{margin-top:6px}
+.livepair.minutes{
+  border-color:rgba(16,185,129,.5);
+  background:linear-gradient(180deg,rgba(16,185,129,.15),rgba(16,185,129,.05) 55%,rgba(7,11,20,.2));
+  box-shadow:0 10px 30px -12px rgba(5,150,105,.5), inset 0 1px 0 rgba(255,255,255,.06);
+}
+.livepair.minutes .pair-head .who{color:var(--emerald-2)}
+.livepair.minutes .pair-live{color:#A7F3D0}
+.livepair.minutes .pair-live i{background:#34D399}
+
 .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .feature{border:1px solid var(--line-soft);border-radius:15px;padding:13px;background:rgba(255,255,255,.02)}
 .feature .fi{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:rgba(99,102,241,.14);color:#C7C8FF;margin-bottom:8px}
@@ -313,6 +351,8 @@ label.field{display:block;font-size:12px;font-weight:700;color:var(--muted);marg
 }
 @keyframes capIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 .cap.me{border-left-color:var(--emerald)}
+.cap.minutes{border-left-color:var(--emerald)}
+.cap.minutes .cap-src{font-size:16.5px;line-height:1.55}
 .cap.star{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.045)}
 .cap-head{display:flex;align-items:center;gap:7px;margin-bottom:4px}
 .cap-time{font-family:var(--mono);font-size:10.5px;color:var(--dim)}
@@ -466,6 +506,11 @@ ul.clean{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;g
 ul.clean li{position:relative;padding-left:17px;font-size:13.5px;line-height:1.55;color:var(--txt-2)}
 ul.clean li::before{content:"";position:absolute;left:3px;top:8px;width:5px;height:5px;border-radius:50%;background:var(--indigo)}
 ul.clean.em li::before{background:var(--emerald)}
+ul.clean.emph li::before{background:var(--amber)}
+.mb-sub{margin:15px 0 7px;font-size:11px;font-weight:800;letter-spacing:.07em;color:var(--dim);text-transform:uppercase}
+.minutes-block h2{text-transform:none;letter-spacing:.02em;font-size:13px;color:var(--txt-2)}
+.minutes-block .oneliner{margin-bottom:4px}
+.doc-btn{white-space:nowrap}
 .action-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-soft)}
 .action-item:last-child{border-bottom:0}
 .action-check{width:18px;height:18px;border-radius:6px;border:1.5px solid #33456A;flex:0 0 18px;margin-top:2px;cursor:pointer;display:grid;place-items:center;color:transparent;background:transparent}
@@ -683,7 +728,7 @@ ul.clean.em li::before{background:var(--emerald)}
 (function () {
   'use strict';
 
-  var BUILD = '3d2463d9aa';
+  var BUILD = '746dfda255';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -706,7 +751,8 @@ ul.clean.em li::before{background:var(--emerald)}
     myLang: 'ko',
     dirMode: 'auto',
     ttsRate: 1,
-    summaryMode: 'auto'
+    summaryMode: 'auto',
+    koMinutes: false
   };
 
   var LANG_LABEL = { en: 'English', ko: '한국어' };
@@ -882,10 +928,14 @@ ul.clean.em li::before{background:var(--emerald)}
   /* ═══════════════════════════════════════════════════════════
      언어 방향 — 영→한 · 한→영 · 양방향 자동
      ═══════════════════════════════════════════════════════════ */
+  /* 회의 모드 — minutes(한국어 회의록 · 번역 없음) / translate(실시간 통역) */
+  function minutesMode() { return settings.koMinutes === true; }
+
   function dirMode() {
     return settings.dirMode === 'en2ko' || settings.dirMode === 'ko2en' ? settings.dirMode : 'auto';
   }
   function fixedSourceLang() {
+    if (minutesMode()) return 'ko';
     var m = dirMode();
     return m === 'en2ko' ? 'en' : (m === 'ko2en' ? 'ko' : '');
   }
@@ -910,15 +960,32 @@ ul.clean.em li::before{background:var(--emerald)}
     return hint === 'ko' ? 'ko' : 'en';
   }
   function directionFor(text, hint) {
+    // 한국어 회의록 모드: 한국어만 인식하고 번역하지 않는다 (tl 없음 = 번역 없음)
+    if (minutesMode()) return { sl: 'ko', tl: '', skip: true };
     var sl = detectSrcLang(text, hint);
     return { sl: sl, tl: opponentLang(sl) };
   }
-  function dirLabel(sl, tl) { return LANG_LABEL[sl] + ' → ' + LANG_LABEL[tl]; }
+  function dirLabel(sl, tl) { return LANG_LABEL[sl] + (tl ? ' → ' + LANG_LABEL[tl] : ' (번역 없음)'); }
   function entryDirTag(entry) {
     var d = entry.dir || directionFor(entry.src, entry.lang);
+    if (!d.tl) return '한국어';
     return LANG_TAG[d.sl] + '→' + LANG_TAG[d.tl];
   }
 
+  function modePickerHTML() {
+    var on = minutesMode();
+    return '<div class="mode-picker" role="group" aria-label="미팅 모드">' +
+      '<button class="mode-opt ko" data-act="set-minutes" data-v="on" aria-pressed="' + on + '" title="한국어만 인식하고 번역하지 않습니다">' +
+        '<b>🇰🇷 한국어 회의록</b><span>번역 없음 · 한국어 원문만</span></button>' +
+      '<button class="mode-opt tr" data-act="set-minutes" data-v="off" aria-pressed="' + (!on) + '" title="영어와 한국어를 실시간으로 번역합니다">' +
+        '<b>🌐 실시간 통역</b><span>영 ↔ 한 자동 번역</span></button>' +
+      '</div>';
+  }
+  function minutesBarHTML() {
+    return '<div class="minutes-bar"><span class="mb-dot"></span>' +
+      '<b>한국어 회의록 (번역 없음)</b>' +
+      '<span class="hint">ko-KR 인식 · 구글 번역 호출 없음 · 한국어 원문만 기록</span></div>';
+  }
   function dirPickerHTML() {
     return '<div class="dir-picker" role="group" aria-label="번역 방향">' +
       DIR_MODES.map(function (m) {
@@ -932,10 +999,33 @@ ul.clean.em li::before{background:var(--emerald)}
       I.swap + '<b>지금 ' + LANG_TAG[langOf(rt.speaker)] + '</b></button>';
   }
   function dirBlockHTML(withSwap) {
+    if (minutesMode()) {
+      // 미팅 화면에서는 버튼만, 홈에서는 모드 안내까지
+      return '<div class="dir-wrap minutes">' + modePickerHTML() + (withSwap ? '' : minutesBarHTML()) + '</div>';
+    }
     var m = dirMode();
-    return '<div class="dir-wrap">' + dirPickerHTML() +
+    return '<div class="dir-wrap">' + modePickerHTML() + dirPickerHTML() +
       '<div class="dir-status"><span class="hint">' + DIR_NOTE[m] + '</span>' +
       (withSwap ? dirSwapHTML() : '') + '</div></div>';
+  }
+  /* 한국어 회의록 ↔ 실시간 통역 전환 (미팅 중에도 즉시 적용) */
+  function setMinutesMode(on) {
+    var next = !!on;
+    if (minutesMode() === next) return;
+    settings.koMinutes = next;
+    saveSettings();
+    rt.interim = '';
+    rt.interimDst = '';
+    rt.interimPending = false;
+    rt.interimErr = '';
+    rt.interimReq = '';
+    rt.interimSeq++;
+    if (rt.active && !rt.demo) retuneRecognition();
+    renderMain();
+    if ($('#sheetRoot') && !$('#sheetRoot').hidden) settingsSheet();
+    toast(next
+      ? '한국어 회의록 모드 — 한국어만 인식하고 번역하지 않습니다.'
+      : '실시간 통역 모드 — 영 ↔ 한 번역을 사용합니다.');
   }
   function retuneRecognition() {
     if (!rt.active || rt.demo || !rt.wantMic || !rt.recognize) return;
@@ -949,6 +1039,7 @@ ul.clean.em li::before{background:var(--emerald)}
   function setDirMode(mode) {
     var m = DIR_MODES.indexOf(mode) >= 0 ? mode : 'auto';
     settings.dirMode = m;
+    settings.koMinutes = false;
     saveSettings();
     rt.interim = '';
     if (m === 'en2ko') rt.speaker = 'other';
@@ -1184,9 +1275,16 @@ ul.clean.em li::before{background:var(--emerald)}
   }
 
   function requestTranslation(entry) {
-    entry.pending = true;
     var dir = entry.dir || directionFor(entry.src, entry.lang);
     entry.dir = dir;
+    if (minutesMode() || !dir.tl) {
+      // 한국어 회의록 모드에서는 번역 요청을 만들지 않는다 (구글 번역 호출 0건)
+      entry.pending = false;
+      entry.failed = false;
+      updateCaption(entry);
+      return;
+    }
+    entry.pending = true;
     enqueue(function () {
       return translateText(entry.src, dir.sl, dir.tl)
         .then(function (t) {
@@ -1444,6 +1542,8 @@ ul.clean.em li::before{background:var(--emerald)}
   }
 
   function setSpeaker(spk) {
+    // 한국어 회의록 모드는 발언자 구분 없이 한국어 한 줄기로 기록한다
+    if (minutesMode()) { rt.speaker = spk; return; }
     var fixed = fixedSourceLang();
     if (fixed && fixed !== speakerLang(spk)) {
       toast(fixed === 'en'
@@ -1768,8 +1868,9 @@ ul.clean.em li::before{background:var(--emerald)}
   function addUtterance(text, spk, opts) {
     opts = opts || {};
     var hint = opts.lang || langOf(spk);
-    var dir = opts.dir || (opts.lang ? { sl: opts.lang, tl: opponentLang(opts.lang) } : directionFor(text, hint));
+    var dir = opts.dir || (opts.lang ? { sl: opts.lang, tl: (minutesMode() ? '' : opponentLang(opts.lang)) } : directionFor(text, hint));
     var lang = dir.sl;
+    var noTr = !!opts.noTranslate || !dir.tl;
     var entry = {
       i: rt.entries.length,
       t: Math.round(elapsedMs()),
@@ -1778,9 +1879,10 @@ ul.clean.em li::before{background:var(--emerald)}
       dir: dir,
       src: text,
       dst: opts.dst || '',
-      pending: opts.pending != null ? !!opts.pending : (!opts.dst && !opts.noTranslate),
+      pending: opts.pending != null ? !!opts.pending : (!opts.dst && !noTr),
       failed: false,
       star: false,
+      minutes: minutesMode(),
       demo: !!opts.demo
     };
     rt.entries.push(entry);
@@ -1789,7 +1891,7 @@ ul.clean.em li::before{background:var(--emerald)}
     if (cnt) cnt.textContent = rt.entries.length + '개 발언';
     if (rt.autoscroll) scrollCaptions();
     saveDraft();
-    if (!opts.dst && !opts.noTranslate) requestTranslation(entry);
+    if (!opts.dst && !noTr) requestTranslation(entry);
     return entry;
   }
 
@@ -1822,24 +1924,27 @@ ul.clean.em li::before{background:var(--emerald)}
   }
 
   function captionHTML(entry) {
-    var cls = 'cap' + (entry.spk === 'me' ? ' me' : '') + (entry.star ? ' star' : '');
+    var mini = entry.minutes === true || (entry.minutes === undefined && minutesMode());
+    var cls = 'cap' + (mini ? ' minutes' : (entry.spk === 'me' ? ' me' : '')) + (entry.star ? ' star' : '');
     var dstCls = entry.pending ? 'cap-dst pending' : (entry.failed ? 'cap-dst fail' : 'cap-dst');
     var dstTxt = entry.pending ? (entry.dst || '번역 중…') : (entry.failed ? '번역 실패 — 탭해서 다시 시도' : (entry.dst || '—'));
+    var dstBlock = mini ? '' :
+      '<div class="' + dstCls + '">' + esc(dstTxt) + '</div>' +
+      '<div class="' + (entry.failed ? '' : 'hide') + '" data-retry-wrap="' + entry.i + '" style="margin-top:6px">' +
+        '<button class="btn sm ghost" data-act="retry" data-i="' + entry.i + '">번역 다시 시도</button></div>';
     return '<div class="' + cls + '" id="cap-' + entry.i + '" data-i="' + entry.i + '">' +
       '<div class="cap-head">' +
         '<span class="cap-time">' + fmtClock(entry.t) + '</span>' +
-        '<span class="tag ' + entry.lang + ' dir">' + entryDirTag(entry) + '</span>' +
-        (entry.spk === 'me' ? '<span class="tag gray">나</span>' : '') +
+        (mini ? '<span class="tag ko">한국어</span>' : '<span class="tag ' + entry.lang + ' dir">' + entryDirTag(entry) + '</span>') +
+        (!mini && entry.spk === 'me' ? '<span class="tag gray">나</span>' : '') +
         (entry.demo ? '<span class="tag demo">DEMO</span>' : '') +
         '<span class="cap-actions">' +
-          '<button class="mini-btn ' + (entry.star ? 'star-on' : '') + '" data-act="star" data-i="' + entry.i + '" aria-pressed="' + (entry.star ? 'true' : 'false') + '" aria-label="스터디에 저장" title="스터디 표현으로 저장">' + I.star + '</button>' +
+          '<button class="mini-btn ' + (entry.star ? 'star-on' : '') + '" data-act="star" data-i="' + entry.i + '" aria-pressed="' + (entry.star ? 'true' : 'false') + '" aria-label="' + (mini ? '회의록에 중요 표시' : '스터디에 저장') + '" title="' + (mini ? '회의록 중요 표시 — 요약에 우선 반영' : '스터디 표현으로 저장') + '">' + I.star + '</button>' +
           '<button class="mini-btn" data-act="speak-entry" data-i="' + entry.i + '" aria-label="다시 듣기" title="다시 듣기">' + I.speaker + '</button>' +
         '</span>' +
       '</div>' +
       '<div class="cap-src">' + esc(entry.src) + '</div>' +
-      '<div class="' + dstCls + '">' + esc(dstTxt) + '</div>' +
-      '<div class="' + (entry.failed ? '' : 'hide') + '" data-retry-wrap="' + entry.i + '" style="margin-top:6px">' +
-        '<button class="btn sm ghost" data-act="retry" data-i="' + entry.i + '">번역 다시 시도</button></div>' +
+      dstBlock +
       '</div>';
   }
 
@@ -1872,6 +1977,14 @@ ul.clean.em li::before{background:var(--emerald)}
   function scheduleInterimTranslation() {
     var text = (rt.interim || '').trim();
     if (!text) { renderInterim(); return; }
+    if (minutesMode()) {
+      // 받아쓰기만: 번역 요청도, 번역 대기 표시도 없다
+      rt.interimDst = '';
+      rt.interimPending = false;
+      rt.interimErr = '';
+      renderInterim();
+      return;
+    }
     // 앞 문장과 이어지지 않는 새 발화면 이전 번역을 지운다 (엉뚱한 번역이 붙지 않도록)
     var prev = rt.interimReq;
     if (prev && text.indexOf(prev) !== 0 && prev.indexOf(text) !== 0) {
@@ -1968,6 +2081,18 @@ ul.clean.em li::before{background:var(--emerald)}
       return;
     }
     el.classList.remove('hide');
+    if (minutesMode()) {
+      el.className = 'livepair minutes';
+      el.setAttribute('data-state', 'hearing');
+      el.innerHTML =
+        '<div class="pair-head">' +
+          '<span class="who">한국어 회의록</span>' +
+          '<span class="tag ko dir">KO</span>' +
+          '<span class="pair-live"><i></i>받아쓰는 중</span>' +
+        '</div>' +
+        '<div class="isrc">' + esc(rt.interim) + (/[.!?。？！,，]$/.test(rt.interim) ? '' : '<span class="dots"></span>') + '</div>';
+      return;
+    }
     el.className = 'livepair' + (rt.interimSpk === 'me' ? ' me' : '');
     var dir = directionFor(rt.interim, langOf(rt.interimSpk));
     var tag = LANG_TAG[dir.sl] + '→' + LANG_TAG[dir.tl];
@@ -2004,7 +2129,7 @@ ul.clean.em li::before{background:var(--emerald)}
     rt.interimErr = '';
     rt.interimReq = '';
     rt.interimSeq++;
-    rt.speaker = fixedSourceLang() === 'ko' ? 'me' : 'other';
+    rt.speaker = minutesMode() ? 'other' : (fixedSourceLang() === 'ko' ? 'me' : 'other');
     rt.autoscroll = true;
     rt.micError = '';
     rt.transError = '';
@@ -2013,7 +2138,9 @@ ul.clean.em li::before{background:var(--emerald)}
     rt.micTracks = 0;
     rt.watch = { timer: null, results: 0, heard: false, warned: false, startAt: 0, lastAt: 0 };
     rt.restarts = 0;
-    rt.title = opts.title || (rt.demo ? '데모 비즈니스 미팅' : '비즈니스 미팅 · ' + fmtShort(new Date()));
+    rt.title = opts.title || (minutesMode()
+      ? (rt.demo ? '데모 한국어 회의록' : '한국어 회의 · ' + fmtShort(new Date()))
+      : (rt.demo ? '데모 비즈니스 미팅' : '비즈니스 미팅 · ' + fmtShort(new Date())));
     rt.rec = { on: false, recorder: null, chunks: [], mime: '', startedAt: 0, lengthMs: 0, demoNodes: [] };
     ui.recovery = null;
     try { localStorage.removeItem(K.draft); } catch (e) {}
@@ -2071,10 +2198,28 @@ ul.clean.em li::before{background:var(--emerald)}
     ];
   }
 
+  /* 한국어 회의록 모드 시연용 — 번역 없이 한국어 원문만, To-do/결정이 잘 뽑히는 문장 */
+  function demoLinesKo() {
+    return [
+      { spk: 'other', lang: 'ko', src: '오늘 회의는 다음 달 코스트코 신규 라인 입점 건으로 진행하겠습니다.' },
+      { spk: 'other', lang: 'ko', src: '먼저 지난주에 보내주신 견적서를 확인했는데, 단가가 작년보다 8퍼센트 올랐습니다.' },
+      { spk: 'other', lang: 'ko', src: '저희는 20피트 컨테이너 기준으로 분기당 2대를 주문할 계획입니다.' },
+      { spk: 'other', lang: 'ko', src: '수량을 늘리면 단가 조정이 가능한지 이번 주 금요일까지 확인해서 회신해 주세요.' },
+      { spk: 'other', lang: 'ko', src: '포장은 코스트코 기준에 맞춰야 해서 포장 사양서를 함께 받아야 합니다.' },
+      { spk: 'other', lang: 'ko', src: '품질팀 검수를 위해 샘플 2세트를 다음 주 화요일까지 발송해 주시기 바랍니다.' },
+      { spk: 'other', lang: 'ko', src: '납기는 주문 확정 후 45일로 보고 있습니다만, 성수기에는 60일까지 늘어날 수 있습니다.' },
+      { spk: 'other', lang: 'ko', src: '그럼 수정 견적서는 이달 말까지 받는 것으로 정리하겠습니다.' },
+      { spk: 'other', lang: 'ko', src: '결제 조건은 T/T 30일로 확정하고, 계약서는 다음 주 수요일까지 초안을 공유하겠습니다.' },
+      { spk: 'other', lang: 'ko', src: '인증서는 FDA와 CE 사본을 견적서와 함께 보내드리겠습니다.' },
+      { spk: 'other', lang: 'ko', src: '물류는 부산항 출하 기준으로 진행하고, 선적 일정은 확정되는 대로 알려드리겠습니다.' },
+      { spk: 'other', lang: 'ko', src: '오늘 논의한 내용은 제가 정리해서 내일 오전까지 메일로 보내드리겠습니다.' }
+    ];
+  }
+
   function playDemo() {
     var fast = /[?&]demo=fast/.test(location.search);
-    var fixed = fixedSourceLang();
-    var lines = demoLines().filter(function (l) { return !fixed || l.lang === fixed; });
+    var lines = minutesMode() ? demoLinesKo()
+      : demoLines().filter(function (l) { return !fixedSourceLang() || l.lang === fixedSourceLang(); });
     var i = 0;
     var cancelled = false;
     rt.demoAbort = function () { cancelled = true; };
@@ -2087,7 +2232,7 @@ ul.clean.em li::before{background:var(--emerald)}
       }
       var line = lines[i++];
       setSpeaker(line.spk);
-      addUtterance(line.src, line.spk, { dst: line.dst, lang: line.lang, demo: true });
+      addUtterance(line.src, line.spk, { dst: line.dst, lang: line.lang, demo: true, noTranslate: minutesMode() });
       setTimeout(next, fast ? 220 : 1700);
     }
     setTimeout(next, fast ? 250 : 900);
@@ -2143,8 +2288,9 @@ ul.clean.em li::before{background:var(--emerald)}
       endedAt: nowISO(),
       durationMs: durationMs,
       demo: rt.demo,
+      minutes: minutesMode(),
       entries: rt.entries.map(function (e) {
-        return { i: e.i, t: e.t, spk: e.spk, lang: e.lang, dir: e.dir, src: e.src, dst: e.dst, star: e.star, demo: e.demo };
+        return { i: e.i, t: e.t, spk: e.spk, lang: e.lang, dir: e.dir, src: e.src, dst: e.dst, star: e.star, demo: e.demo, minutes: !!e.minutes };
       }),
       summary: null,
       summaryState: 'pending',
@@ -2195,7 +2341,7 @@ ul.clean.em li::before{background:var(--emerald)}
     if (!rt.active) return;
     var draft = {
       meetingId: rt.meetingId, title: rt.title, startedAt: new Date(rt.startedAt).toISOString(),
-      entries: rt.entries, savedAt: nowISO(), demo: rt.demo
+      entries: rt.entries, savedAt: nowISO(), demo: rt.demo, minutes: minutesMode()
     };
     try { localStorage.setItem(K.draft, JSON.stringify(draft)); } catch (e) {}
   }
@@ -2222,6 +2368,7 @@ ul.clean.em li::before{background:var(--emerald)}
       id: d.meetingId || uid(),
       title: (d.title || '복구된 미팅') + ' (복구)',
       startedAt: d.startedAt, endedAt: d.savedAt, durationMs: 0, demo: !!d.demo,
+      minutes: !!d.minutes,
       entries: d.entries, summary: null, summaryState: 'pending', engine: settings.engine, recovered: true
     };
     if (d.entries.length) {
@@ -2382,6 +2529,132 @@ ul.clean.em li::before{background:var(--emerald)}
     };
   }
 
+  /* ── 한국어 회의록 판별 · 규칙 분석기 ───────────────────────── */
+  function isMinutesMeeting(m) {
+    if (!m) return false;
+    if (m.minutes) return true;
+    var es = m.entries || [];
+    if (!es.length) return false;
+    return es.every(function (e) { return e.lang === 'ko' && !e.dst; });
+  }
+
+  var KO_DECISION_RE = /(확정하|확정했|확정입니다|로 확정|을 확정|결정하|결정했|합의|동의|승인|채택|하기로|기로 했|로 정리하겠|마무리하겠)/;
+  /* To-do 판별 — 요청·약속 문장만, 단순 현황·가능성 서술은 제외 */
+  var KO_COMMIT_RE = /(하겠습니다|하기로|예정입니다|할 예정|진행할 예정|보내드리겠|공유하겠|알려드리겠|정리해서|확인해서|검토해서|발송해|회신해|해 주시|해주시|주시기 바랍니다|주세요|부탁)/;
+  var KO_ACTION_RE = /(확인|검토|진행|정리|회신|발송|송부|공유|보내|드리|준비|요청|체크|등록|보고|연락|마무리|세팅|전달|수정|작성|하기|예정)/;
+  var KO_NOT_TODO_RE = /(수 있습니다|수 있을 것|보고 있습니다|생각합니다|것 같습니다|여겨집니다|경우가 있습니다)/;
+  var KO_AGENDA_ONLY_RE = /(회의는|회의를|안건은).*(진행하겠습니다|시작하겠습니다|시작합니다)/;
+
+  function isTodoSentence(t) {
+    if (!t || KO_NOT_TODO_RE.test(t) || KO_AGENDA_ONLY_RE.test(t)) return false;
+    if (!KO_ACTION_RE.test(t)) return false;
+    if (KO_COMMIT_RE.test(t)) return true;
+    return /까지/.test(t);
+  }
+  var KO_BIZ_WORDS = ['단가', '가격', '견적', '할인', '수량', '주문', '계약', '샘플', '납기', '배송', '선적', '포장', '품질',
+    '보증', '인증', '결제', '프로모션', '전망', '컨테이너', '사양', '일정', '마감', '재고', '물류', '바이어', '코스트코',
+    '매출', '생산', '검수', '출하', '통관', '클레임', 'FOB', 'CIF', 'T/T', 'MOQ'];
+
+  function splitSentences(text) {
+    return String(text || '').split(/(?<=[.!?。？！])\s*/)
+      .map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 1; });
+  }
+
+  function extractDueKo(text) {
+    var t = String(text || '');
+    var m = t.match(/(다음\s*주|이번\s*주|차주|금주)\s*(월|화|수|목|금|토|일)?\s*요일?\s*까지/) ||
+            t.match(/(이번|다음|이달|다음달|금월|차월)\s*(달|월)?\s*(말|초|중순)\s*까지/) ||
+            t.match(/\d{1,2}\s*월\s*\d{1,2}\s*일\s*까지/) ||
+            t.match(/(오늘|내일|모레|금일|명일)\s*(오전|오후|저녁|밤|점심|퇴근)\s*(까지|전)/) ||
+            t.match(/(오늘|내일|모레|금일|명일)\s*까지/) ||
+            t.match(/([가-힣0-9]{0,6}\s?까지)/);
+    return m ? m[0].replace(/\s+/g, ' ').trim() : '';
+  }
+
+  function todoTask(text) {
+    var t = String(text || '')
+      .replace(/^(그러면|그럼|그리고|또한|일단|우선|네|예|좋습니다|감사합니다|알겠습니다)[,\s]+/g, '')
+      .replace(/\s+/g, ' ').trim();
+    return truncate(t, 160);
+  }
+
+  function todoOwnerOf(text) {
+    if (/(제가|저희가|저희 쪽|저희는|우리가|내가)/.test(text)) return '나';
+    if (/(해 주|해주|주시|주세요|부탁|보내주|회신해|알려주)/.test(text)) return '상대';
+    return '';
+  }
+
+  function ruleMinutesSummary(meeting) {
+    var entries = meeting.entries || [];
+    var stats = statsOf(meeting);
+    if (!entries.length) {
+      return { form: 'minutes', mode: 'rule', oneLiner: '기록된 발언이 없습니다.', agenda: [], decisions: [], actions: [], highlights: [], expressions: [], stats: stats };
+    }
+
+    function pushUnique(list, t, cap) {
+      if (!t) return false;
+      for (var i = 0; i < list.length; i++) if (overlapRatio(t, list[i]) > 0.62) return false;
+      if (list.length >= cap) return false;
+      list.push(t);
+      return true;
+    }
+
+    // 문장 단위로 쪼개 점수화: 업무 키워드 + 결정 표지 + To-do 표지 + ★
+    var items = [];
+    entries.forEach(function (e) {
+      splitSentences(e.src).forEach(function (sent) {
+        var t = cleanLine(sent);
+        if (!t || t.length < 6) return;
+        var s = 0;
+        KO_BIZ_WORDS.forEach(function (k) { if (t.indexOf(k) >= 0) s += 2; });
+        if (KO_DECISION_RE.test(t)) s += 3;
+        if (isTodoSentence(t)) s += 2;
+        if (e.star) s += 6;
+        if (t.length > 34) s += 1;
+        items.push({ t: t, e: e, s: s, star: !!e.star });
+      });
+    });
+    if (!items.length) {
+      return { form: 'minutes', mode: 'rule', oneLiner: truncate(cleanLine(entries[0].src), 110), agenda: entries.slice(0, 3).map(function (e) { return truncate(cleanLine(e.src), 150); }), decisions: [], actions: [], highlights: [], expressions: [], stats: stats };
+    }
+
+    var ranked = items.slice().sort(function (a, b) { return b.s - a.s || a.e.i - b.e.i; });
+    var oneLiner = truncate(ranked[0].t, 120);
+
+    var agenda = [];
+    ranked.forEach(function (x) {
+      if (agenda.length >= 5) return;
+      if (oneLiner && overlapRatio(x.t, oneLiner) > 0.62) return;
+      pushUnique(agenda, truncate(x.t, 170), 5);
+    });
+    if (!agenda.length) entries.slice(0, 3).forEach(function (e) { pushUnique(agenda, truncate(cleanLine(e.src), 150), 3); });
+
+    var decisions = [];
+    items.filter(function (x) { return KO_DECISION_RE.test(x.t); })
+      .sort(function (a, b) { return b.s - a.s || a.e.i - b.e.i; })
+      .forEach(function (x) { pushUnique(decisions, truncate(x.t, 180), 6); });
+
+    var todoTexts = [];
+    var actions = [];
+    items.filter(function (x) { return isTodoSentence(x.t); })
+      .sort(function (a, b) { return (b.star ? 1 : 0) - (a.star ? 1 : 0) || b.s - a.s || a.e.i - b.e.i; })
+      .forEach(function (x) {
+        if (actions.length >= 8) return;
+        var task = todoTask(x.t);
+        if (!task || task.length < 6) return;
+        if (!pushUnique(todoTexts, task, 8)) return;
+        actions.push({ task: task, owner: todoOwnerOf(x.t), due: extractDueKo(x.t), done: false });
+      });
+
+    var highlights = [];
+    items.filter(function (x) { return x.star; })
+      .sort(function (a, b) { return a.e.i - b.e.i; })
+      .forEach(function (x) { pushUnique(highlights, truncate(x.t, 180), 6); });
+
+    return { form: 'minutes', mode: 'rule', oneLiner: oneLiner, agenda: agenda, decisions: decisions, actions: actions, highlights: highlights, expressions: [], stats: stats };
+  }
+
   function pickText(e) {
     if (!e) return '';
     // 요약은 한국어로: 영어 발언은 번역문, 한국어 발언은 원문
@@ -2434,54 +2707,93 @@ ul.clean.em li::before{background:var(--emerald)}
       '회의: ' + meeting.title + ' / ' + new Date(meeting.startedAt).toLocaleString('ko-KR') + '\n\n' + lines;
   }
 
+  var MINUTES_SYSTEM_PROMPT = 'You write Korean meeting minutes (회의록) for DAELIMBATH, a Korean bathroom-fixture manufacturer. ' +
+    'Read the Korean transcript and reply with JSON only, in Korean. Schema: ' +
+    '{"oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "owner": string, "due": string}], "highlights": string[]}. ' +
+    'oneLiner: the meeting in one Korean sentence, max 60 chars. ' +
+    'agenda: 3-6 main discussion points actually talked about, one sentence each. ' +
+    'decisions: only what was actually agreed or confirmed (empty array if none). ' +
+    'actions: 2-8 concrete To-do items, task written as a short Korean action (e.g. "수정 견적서 발송하기"), ' +
+    'due only when the transcript states a deadline (e.g. "다음 주 화요일까지"), otherwise ""; owner only when clear ("나"/"상대"/"담당자"), otherwise "". ' +
+    'highlights: up to 5 sentences that were marked ★ or that carry the key decision/number. Never translate; do not add anything not in the transcript.';
+
+  function transcriptLines(meeting, minutes) {
+    return (meeting.entries || []).map(function (e) {
+      if (minutes) return '[' + fmtClock(e.t) + '] ' + (e.star ? '★ ' : '') + (e.src || '');
+      return '[' + fmtClock(e.t) + '] ' + (e.spk === 'me' ? '나' : '상대') + ' (' + LANG_TAG[e.lang] + ') ' + e.src + (e.dst ? ' → ' + e.dst : '');
+    }).join('\n');
+  }
+
   function buildSummary(meeting) {
+    var minutes = isMinutesMeeting(meeting);
     meeting.summaryState = 'working';
     meeting.summaryMode = (settings.summaryMode === 'rule' || !settings.openaiKey) ? 'rule' : 'gpt';
     var useGPT = meeting.summaryMode === 'gpt';
+    meeting.summaryForm = minutes ? 'minutes' : 'translate';
     if (!useGPT) {
       return new Promise(function (resolve) {
         setTimeout(function () {
-          meeting.summary = ruleSummary(meeting);
+          meeting.summary = minutes ? ruleMinutesSummary(meeting) : ruleSummary(meeting);
           meeting.summaryState = 'done';
           resolve(meeting.summary);
         }, 220);
       });
     }
-    var transcript = meeting.entries.map(function (e) {
-      return '[' + fmtClock(e.t) + '] ' + (e.spk === 'me' ? '나' : '상대') + ' (' + LANG_TAG[e.lang] + ') ' + e.src + (e.dst ? ' → ' + e.dst : '');
-    }).join('\n');
-    return openaiChat([
-      {
-        role: 'system',
-        content: 'You are a senior business meeting analyst for a Korean bathroom-fixture manufacturer (DAELIMBATH) that sells to overseas buyers. ' +
-          'Read the bilingual transcript and reply with JSON only, in Korean (English original for expressions). Schema: ' +
-          '{"oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "owner": string, "due": string}], ' +
-          '"expressions": [{"en": string, "ko": string, "nuance": string, "alt": string}]}. ' +
-          'oneLiner: one sentence, max 60 Korean chars. agenda: 3-5 items. decisions: concrete agreements only (empty array if none). ' +
-          'actions: concrete follow-ups with owner (나/상대/담당자) and due date if mentioned, else "". ' +
-          'expressions: 5-10 advanced business English phrases actually used in the transcript, with Korean meaning, nuance in Korean, and one alternative phrase.'
-      },
-      { role: 'user', content: '회의: ' + meeting.title + '\n\n' + transcript }
-    ], { json: true, temperature: 0.2, maxTokens: 1400 }).then(function (content) {
+    var transcript = transcriptLines(meeting, minutes);
+    var messages = minutes
+      ? [
+          { role: 'system', content: MINUTES_SYSTEM_PROMPT },
+          { role: 'user', content: '회의: ' + meeting.title + ' / ' + new Date(meeting.startedAt).toLocaleString('ko-KR') + '\n\n' + transcript }
+        ]
+      : [
+          {
+            role: 'system',
+            content: 'You are a senior business meeting analyst for a Korean bathroom-fixture manufacturer (DAELIMBATH) that sells to overseas buyers. ' +
+              'Read the bilingual transcript and reply with JSON only, in Korean (English original for expressions). Schema: ' +
+              '{"oneLiner": string, "agenda": string[], "decisions": string[], "actions": [{"task": string, "owner": string, "due": string}], ' +
+              '"expressions": [{"en": string, "ko": string, "nuance": string, "alt": string}]}. ' +
+              'oneLiner: one sentence, max 60 Korean chars. agenda: 3-5 items. decisions: concrete agreements only (empty array if none). ' +
+              'actions: concrete follow-ups with owner (나/상대/담당자) and due date if mentioned, else "". ' +
+              'expressions: 5-10 advanced business English phrases actually used in the transcript, with Korean meaning, nuance in Korean, and one alternative phrase.'
+          },
+          { role: 'user', content: '회의: ' + meeting.title + '\n\n' + transcript }
+        ];
+    return openaiChat(messages, { json: true, temperature: 0.2, maxTokens: 1400 }).then(function (content) {
       var data;
       try {
         data = JSON.parse(content.replace(/^```json\s*/i, '').replace(/```$/g, '').trim());
       } catch (e) {
         throw new Error('요약 JSON 해석 실패');
       }
-      meeting.summary = {
-        mode: 'gpt',
-        oneLiner: String(data.oneLiner || '').trim() || '요약을 생성했습니다.',
-        agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6) : [],
-        decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6) : [],
-        actions: Array.isArray(data.actions) ? data.actions.slice(0, 8) : [],
-        expressions: Array.isArray(data.expressions) ? data.expressions.slice(0, 10) : [],
-        stats: statsOf(meeting)
-      };
+      if (minutes) {
+        meeting.summary = {
+          form: 'minutes',
+          mode: 'gpt',
+          oneLiner: String(data.oneLiner || '').trim() || '요약을 생성했습니다.',
+          agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6) : [],
+          decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6) : [],
+          actions: Array.isArray(data.actions) ? data.actions.slice(0, 8).map(function (a) {
+            return { task: String((a && a.task) || ''), owner: String((a && a.owner) || ''), due: String((a && a.due) || ''), done: !!(a && a.done) };
+          }) : [],
+          highlights: Array.isArray(data.highlights) ? data.highlights.slice(0, 6) : [],
+          expressions: [],
+          stats: statsOf(meeting)
+        };
+      } else {
+        meeting.summary = {
+          mode: 'gpt',
+          oneLiner: String(data.oneLiner || '').trim() || '요약을 생성했습니다.',
+          agenda: Array.isArray(data.agenda) ? data.agenda.slice(0, 6) : [],
+          decisions: Array.isArray(data.decisions) ? data.decisions.slice(0, 6) : [],
+          actions: Array.isArray(data.actions) ? data.actions.slice(0, 8) : [],
+          expressions: Array.isArray(data.expressions) ? data.expressions.slice(0, 10) : [],
+          stats: statsOf(meeting)
+        };
+      }
       meeting.summaryState = 'done';
       return meeting.summary;
     }).catch(function (err) {
-      meeting.summary = ruleSummary(meeting);
+      meeting.summary = minutes ? ruleMinutesSummary(meeting) : ruleSummary(meeting);
       meeting.summaryState = 'done';
       meeting.summaryError = (err && err.message) ? err.message : 'GPT 요약 실패';
       meeting.summaryMode = 'rule';
@@ -2546,21 +2858,26 @@ ul.clean.em li::before{background:var(--emerald)}
   function toggleStar(entry) {
     entry.star = !entry.star;
     if (entry.star) {
-      var en = entry.lang === 'en' ? entry.src : entry.dst;
-      var ko = entry.lang === 'en' ? entry.dst : entry.src;
-      var item = addStudy({
-        en: en, ko: ko,
-        nuance: entry.lang === 'en' ? '회의 자막에서 저장한 표현' : '내가 한 말의 영어 번역 — 같은 상황에서 바로 쓸 수 있는 표현',
-        source: rt.title, meetingId: rt.meetingId, date: new Date().toISOString()
-      });
-      entry.studyId = item ? item.id : '';
-      toast('스터디에 저장했습니다. 나중에 복습 탭에서 들어 보세요.');
+      if (minutesMode()) {
+        // 회의록 강조용 — 영어 표현이 없으므로 스터디에는 넣지 않는다
+        toast('회의록에 중요 표시했습니다. 요약의 주요사항에 먼저 반영됩니다.');
+      } else {
+        var en = entry.lang === 'en' ? entry.src : entry.dst;
+        var ko = entry.lang === 'en' ? entry.dst : entry.src;
+        var item = addStudy({
+          en: en, ko: ko,
+          nuance: entry.lang === 'en' ? '회의 자막에서 저장한 표현' : '내가 한 말의 영어 번역 — 같은 상황에서 바로 쓸 수 있는 표현',
+          source: rt.title, meetingId: rt.meetingId, date: new Date().toISOString()
+        });
+        entry.studyId = item ? item.id : '';
+        toast('스터디에 저장했습니다. 나중에 복습 탭에서 들어 보세요.');
+      }
     } else {
       if (entry.studyId) {
         study = study.filter(function (s) { return s.id !== entry.studyId; });
         saveStudy();
       }
-      toast('스터디 저장을 해제했습니다.');
+      toast(minutesMode() ? '중요 표시를 해제했습니다.' : '스터디 저장을 해제했습니다.');
     }
     var el = document.getElementById('cap-' + entry.i);
     if (el) {
@@ -2650,19 +2967,22 @@ ul.clean.em li::before{background:var(--emerald)}
     if (rt.active) return sessionHTML();
     var rec = ui.recovery;
     var hasStudy = study.length;
+    var mini = minutesMode();
     return '<div class="stack">' +
       (rec ? '<div class="banner warn">' + I.info + '<div class="grow"><b>저장되지 않은 미팅 기록이 있습니다.</b><br>' +
         '지난 미팅 ' + rec.entries.length + '개 발언 · ' + fmtShort(new Date(rec.savedAt || rec.startedAt)) + ' — 요약으로 저장할까요?' +
         '</div><button class="btn sm soft" data-act="recover">요약으로 저장</button>' +
         '<button class="btn sm ghost" data-act="discard-draft">버리기</button></div>' : '') +
       '<section class="card hero">' +
-        '<span class="hero-kicker"><span class="dot"></span>LIVE INTERPRETER · AUTO NOTES</span>' +
-        '<h1>미팅은 그대로,<br><em>통역과 기록은 여기서.</em></h1>' +
-        '<p>마이크로 상대의 영어와 내 한국어를 실시간 자막으로 바꾸고, 자동 녹음·요약·비즈니스 표현 스터디까지 한 번에 남깁니다.</p>' +
+        '<span class="hero-kicker"><span class="dot"></span>' + (mini ? 'KOREAN MINUTES · NO TRANSLATION' : 'LIVE INTERPRETER · AUTO NOTES') + '</span>' +
+        '<h1>' + (mini ? '한국어 회의는 그대로,<br><em>회의록과 To-do만 남기세요.</em>' : '미팅은 그대로,<br><em>통역과 기록은 여기서.</em>') + '</h1>' +
+        '<p>' + (mini
+          ? '음성을 한국어로 그대로 받아 적고, 번역 없이 빠르게 1. 주요사항 요약 · 2. To-do 회의록으로 정리합니다.'
+          : '마이크로 상대의 영어와 내 한국어를 실시간 자막으로 바꾸고, 자동 녹음·요약·비즈니스 표현 스터디까지 한 번에 남깁니다.') + '</p>' +
         dirBlockHTML(false) +
         '<div class="hero-actions">' +
-          '<button class="btn start" data-act="start" id="startBtn">' + I.mic + ' 미팅 시작</button>' +
-          '<button class="btn ghost" data-act="demo" id="demoBtn">데모 미팅</button>' +
+          '<button class="btn start" data-act="start" id="startBtn">' + I.mic + ' ' + (mini ? '한국어 회의록 시작' : '미팅 시작') + '</button>' +
+          '<button class="btn ghost" data-act="demo" id="demoBtn">' + (mini ? '데모 회의록' : '데모 미팅') + '</button>' +
         '</div>' +
         '<div class="row tiny dim" style="margin-top:10px;gap:12px;flex-wrap:wrap">' +
           '<span>● 자동 녹음 ' + (settings.recDefault ? 'ON' : 'OFF') + '</span>' +
@@ -2671,9 +2991,9 @@ ul.clean.em li::before{background:var(--emerald)}
         '</div>' +
       '</section>' +
       '<section class="feature-grid">' +
-        '<div class="feature"><div class="fi">' + I.mic + '</div><b>실시간 자막</b><span>영→한 · 한→영 · 양방향 자동, 1탭 전환</span></div>' +
+        '<div class="feature"><div class="fi">' + I.mic + '</div><b>' + (mini ? '한국어 받아쓰기' : '실시간 자막') + '</b><span>' + (mini ? 'ko-KR 고정 · 구글 번역 호출 없음' : '영→한 · 한→영 · 양방향 자동, 1탭 전환') + '</span></div>' +
         '<div class="feature"><div class="fi">' + I.speaker + '</div><b>자동 녹음</b><span>미팅 시작과 동시에 녹음, 종료 후 바로 재생·저장</span></div>' +
-        '<div class="feature"><div class="fi">' + I.spark + '</div><b>요약 · 표현</b><span>핵심·결정·액션 아이템과 고급 표현을 뽑아 스터디로</span></div>' +
+        '<div class="feature"><div class="fi">' + I.doc + '</div><b>' + (mini ? '회의록 · To-do' : '요약 · 표현') + '</b><span>' + (mini ? '1. 주요사항 요약 · 2. To-do · .doc 저장' : '핵심·결정·액션 아이템과 고급 표현을 뽑아 스터디로') + '</span></div>' +
       '</section>' +
       '<section class="card guide-card">' +
         '<h3>' + I.mic + ' 오프라인 · 대면 미팅</h3>' +
@@ -2709,24 +3029,25 @@ ul.clean.em li::before{background:var(--emerald)}
 
   function sessionHTML() {
     var recOn = rt.rec.recorder && rt.rec.recorder.state === 'recording';
+    var mini = minutesMode();
     var bars = '';
     for (var i = 0; i < 13; i++) bars += '<i></i>';
     return '<div class="stack">' +
-      '<section class="card session">' +
+      '<section class="card session' + (mini ? ' ko-minutes' : '') + '">' +
         '<div class="session-top">' +
           '<span class="' + (rt.paused ? 'rec-dot' : 'rec-dot') + '" style="' + (rt.paused ? 'background:#F59E0B;box-shadow:0 0 0 4px rgba(245,158,11,.15)' : '') + '"></span>' +
           '<div class="timer" id="timerVal">' + fmtClock(elapsedMs()) + '</div>' +
-          '<div class="session-meta"><span class="s1">' + (rt.paused ? '일시정지' : (rt.demo ? '데모 미팅 진행 중' : '미팅 진행 중')) + '</span>' +
-            '<span class="s2" id="activeSpkLabel">' + speakerName(rt.speaker) + ' · ' + dirLabel(langOf(rt.speaker), targetLang(rt.speaker)) + '</span></div>' +
+          '<div class="session-meta"><span class="s1">' + (rt.paused ? '일시정지' : (rt.demo ? (mini ? '데모 회의록 진행 중' : '데모 미팅 진행 중') : (mini ? '한국어 회의록 작성 중' : '미팅 진행 중'))) + '</span>' +
+            '<span class="s2" id="activeSpkLabel">' + (mini ? '한국어 회의록 · 번역 없음' : speakerName(rt.speaker) + ' · ' + dirLabel(langOf(rt.speaker), targetLang(rt.speaker))) + '</span></div>' +
           '<div class="level" id="levelBars">' + bars + '</div>' +
         '</div>' +
         dirBlockHTML(true) +
-        '<div class="speaker-switch">' + speakerBtnHTML('other') + speakerBtnHTML('me') + '</div>' +
+        (mini ? '' : '<div class="speaker-switch">' + speakerBtnHTML('other') + speakerBtnHTML('me') + '</div>') +
         '<div class="caption-tools">' +
           '<span class="sr-badge" id="srStatus" data-state="' + srStateNow().key + '"><i></i>' + esc(srStateNow().label) + '</span>' +
           '<span class="tiny dim" id="utteranceCount">' + rt.entries.length + '개 발언</span>' +
           '<span class="tiny dim">·</span>' +
-          '<span class="tiny dim" id="dirMini">' + DIR_TAG[dirMode()] + '</span>' +
+          '<span class="tiny dim" id="dirMini">' + (mini ? '한국어 원문' : DIR_TAG[dirMode()]) + '</span>' +
           '<span class="spacer"></span>' +
           '<button class="rec-toggle" data-act="toggle-rec" aria-pressed="' + (!!recOn) + '"><span class="sw"></span>녹음</button>' +
         '</div>' +
@@ -2741,7 +3062,9 @@ ul.clean.em li::before{background:var(--emerald)}
         '</div>' +
       '</section>' +
       '<div class="row tiny dim" style="justify-content:center;gap:14px;flex-wrap:wrap">' +
-        '<span>' + I.star + ' 별표 = 스터디 저장</span><span>' + I.speaker + ' = 다시 듣기</span><span>Tab = 발언자 전환</span>' +
+        (mini
+          ? '<span>' + I.star + ' 별표 = 회의록 중요 표시</span><span>' + I.speaker + ' = 다시 듣기</span><span>한국어 원문 그대로 기록</span>'
+          : '<span>' + I.star + ' 별표 = 스터디 저장</span><span>' + I.speaker + ' = 다시 듣기</span><span>Tab = 발언자 전환</span>') +
       '</div>' +
       '</div>';
   }
@@ -2833,15 +3156,18 @@ ul.clean.em li::before{background:var(--emerald)}
     var d = new Date(m.startedAt);
     var stats = s ? s.stats : statsOf(m);
     var starCount = (m.entries || []).filter(function (e) { return e.star; }).length;
+    var mini = isMinutesMeeting(m);
 
     return '<div class="stack">' +
-      '<div class="row" style="gap:8px;padding:4px 2px 0">' +
+      '<div class="row" style="gap:8px;padding:4px 2px 0;flex-wrap:wrap">' +
         '<button class="btn sm ghost" data-act="back-summary">' + I.back + ' 요약 목록</button>' +
         '<span class="spacer" style="flex:1"></span>' +
+        '<button class="btn sm soft doc-btn" data-act="save-doc" data-id="' + m.id + '">' + I.download + ' 회의록 .doc 저장</button>' +
         '<button class="btn sm ghost" data-act="rename" data-id="' + m.id + '">제목 수정</button>' +
       '</div>' +
       '<section class="card detail-head">' +
         '<div class="row" style="gap:6px;flex-wrap:wrap">' +
+          (mini ? '<span class="tag ko">한국어 회의록</span>' : '') +
           (m.demo ? '<span class="tag demo">DEMO</span>' : '') +
           (s && s.mode === 'gpt' ? '<span class="tag gpt">GPT 요약</span>' : (s ? '<span class="tag gray">규칙 요약</span>' : '')) +
           (m.recovered ? '<span class="tag gray">복구됨</span>' : '') +
@@ -2849,7 +3175,7 @@ ul.clean.em li::before{background:var(--emerald)}
         '<h1 style="margin-top:8px">' + esc(m.title) + '</h1>' +
         '<div class="dm"><span>' + fmtDate(d) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + '</span>' +
           '<span>' + fmtDur(m.durationMs || 0) + '</span>' +
-          '<span>발언 ' + stats.total + ' (EN ' + stats.en + ' / KO ' + stats.ko + ')</span>' +
+          '<span>' + (mini ? '발언 ' + stats.total + '건' : '발언 ' + stats.total + ' (EN ' + stats.en + ' / KO ' + stats.ko + ')') + '</span>' +
           '<span>⭐ ' + starCount + '</span></div>' +
         '<div class="audio-box" id="audioBox"><div class="abt">' + I.speaker + ' 미팅 녹음</div>' +
           '<div class="tiny dim" id="audioArea">녹음을 불러오는 중…</div></div>' +
@@ -2858,11 +3184,11 @@ ul.clean.em li::before{background:var(--emerald)}
         '<div class="stack" style="gap:8px"><div class="skeleton" style="width:82%"></div><div class="skeleton" style="width:64%"></div><div class="skeleton" style="width:74%"></div><div class="skeleton" style="width:48%"></div></div></section>' : '') +
       (s && !working ? summaryBlocksHTML(m, s) : '') +
       '<section class="card summary-block">' +
-        '<h2>' + I.doc + ' 전체 자막 <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + (m.entries || []).length + '개</span></h2>' +
+        '<h2>' + I.doc + ' ' + (mini ? '전체 발언 기록' : '전체 자막') + ' <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + (m.entries || []).length + '개</span></h2>' +
         '<div class="transcript" id="transcriptBox">' + (m.entries || []).map(function (e) {
           return '<div class="trow"><span class="tt">' + fmtClock(e.t) + '</span><span class="ts">' +
-            '<span class="tag ' + e.lang + '" style="margin-right:4px">' + LANG_TAG[e.lang] + '</span>' + esc(e.src) +
-            (e.dst ? '<small>→ ' + esc(e.dst) + '</small>' : '') + '</span>' +
+            (mini ? '' : '<span class="tag ' + e.lang + '" style="margin-right:4px">' + LANG_TAG[e.lang] + '</span>') + esc(e.src) +
+            (!mini && e.dst ? '<small>→ ' + esc(e.dst) + '</small>' : '') + '</span>' +
             (e.star ? '<span style="color:#F59E0B">★</span>' : '') + '</div>';
         }).join('') + '</div>' +
         '<div class="summary-actions" style="margin-top:14px">' +
@@ -2876,7 +3202,38 @@ ul.clean.em li::before{background:var(--emerald)}
       '</div>';
   }
 
+  /* 회의록 전용: 1. 주요사항 요약 · 2. To-do */
+  function minutesBlocksHTML(m, s) {
+    var agenda = s.agenda || [];
+    var decisions = s.decisions || [];
+    var highlights = s.highlights || [];
+    var todos = s.actions || [];
+    var todoRows = todos.map(function (a, i) {
+      var done = !!a.done;
+      return '<div class="action-item"><span class="action-check ' + (done ? 'on' : '') + '" data-act="toggle-action" data-id="' + m.id + '" data-idx="' + i + '" role="checkbox" aria-checked="' + (done ? 'true' : 'false') + '">' + I.check + '</span>' +
+        '<div class="action-body"><b style="' + (done ? 'opacity:.55;text-decoration:line-through' : '') + '">' + esc(a.task || '') + '</b>' +
+        '<div class="action-meta">' + (a.owner ? '<span>' + esc(a.owner) + '</span>' : '') +
+        (a.due ? '<span>' + esc(a.due) + '</span>' : '') +
+        '<span>' + (done ? '완료' : '미완료') + '</span></div></div></div>';
+    }).join('');
+    return '<section class="card summary-block minutes-block">' +
+        '<h2>' + I.doc + ' 1. 주요사항 요약</h2>' +
+        '<p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
+        '<div class="mb-sub">주요 논의</div>' +
+        (agenda.length ? '<ul class="clean">' + agenda.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p class="small dim">정리된 논의가 없습니다.</p>') +
+        '<div class="mb-sub">결정 사항</div>' +
+        (decisions.length ? '<ul class="clean em">' + decisions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '<p class="small dim">명시적으로 확정된 사항은 없습니다.</p>') +
+        (highlights.length ? '<div class="mb-sub">★ 중요 표시</div><ul class="clean emph">' + highlights.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>' : '') +
+      '</section>' +
+      '<section class="card summary-block minutes-block">' +
+        '<h2>' + I.check + ' 2. To-do <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + todos.length + '</span></h2>' +
+        (todoRows || '<p class="small dim">추출된 To-do가 없습니다. 자막에서 ★를 누르면 중요 문장이 요약에 우선 반영됩니다.</p>') +
+        (todos.length ? '<div class="hint small dim" style="margin-top:10px">체크박스를 누르면 완료 여부가 저장되고 .doc 회의록에도 그대로 표시됩니다.</div>' : '') +
+      '</section>';
+  }
+
   function summaryBlocksHTML(m, s) {
+    if (isMinutesMeeting(m) || s.form === 'minutes') return minutesBlocksHTML(m, s);
     var exprRows = (s.expressions || []).map(function (x, i) {
       var saved = study.some(function (st) { return normKey(st.en) === normKey(x.en); });
       return '<div class="expr-row"><div class="expr-body">' +
@@ -2905,6 +3262,119 @@ ul.clean.em li::before{background:var(--emerald)}
         (exprRows || '<p class="small dim">이번 미팅에서 뽑아낸 표현이 없습니다. 자막의 ★으로 직접 저장해 보세요.</p>') +
         (exprRows ? '<button class="btn sm soft wide" style="margin-top:12px" data-act="add-all-expr" data-id="' + m.id + '">' + I.plus + ' 전체 스터디에 추가</button>' : '') +
       '</section>';
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     회의록 .doc 내보내기 — Word·한글(HWP)·구글 문서에서 바로 열리는
+     Word 호환 HTML (.doc) · UTF-8 BOM · A4 표 서식
+     ═══════════════════════════════════════════════════════════ */
+  function docSafeName(s) {
+    var out = String(s || '회의록')
+      .replace(/[\\/:*?"<>|\r\n\t]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 60);
+    return out || '회의록';
+  }
+  function docDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+
+  function minutesDocHTML(m, s) {
+    s = s || {};
+    var d = new Date(m.startedAt);
+    var mini = isMinutesMeeting(m);
+    var entries = m.entries || [];
+    var starCount = entries.filter(function (e) { return e.star; }).length;
+    var todos = s.actions || [];
+    var agenda = s.agenda || [];
+    var decisions = s.decisions || [];
+    var highlights = s.highlights || [];
+
+    var infoRows = [
+      ['회의 제목', m.title || ''] ,
+      ['일시', fmtDate(d) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes())],
+      ['소요시간', fmtDur(m.durationMs || 0)],
+      ['발언 수', entries.length + '건'],
+      ['중요 표시', starCount + '건'],
+      ['작성 방식', (s.mode === 'gpt' ? 'GPT 요약 (' + (settings.model || 'gpt-4o-mini') + ')' : '규칙 분석') + (mini ? ' · 한국어 회의록(번역 없음)' : ' · 실시간 통역')],
+      ['작성일', fmtDate(new Date())]
+    ];
+    var infoHTML = infoRows.map(function (r) {
+      return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
+    }).join('');
+
+    var agendaHTML = agenda.length
+      ? '<ul>' + agenda.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>'
+      : '<p class="none">정리된 논의가 없습니다.</p>';
+    var decisionsHTML = decisions.length
+      ? '<ul>' + decisions.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>'
+      : '<p class="none">명시적으로 확정된 사항은 없습니다.</p>';
+    var highlightsHTML = highlights.length
+      ? '<h3>★ 중요 표시</h3><ul>' + highlights.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul>'
+      : '';
+
+    var todoHTML = todos.length
+      ? '<table class="todo"><thead><tr><th style="width:17%">완료 여부</th><th>할 일</th><th style="width:22%">기한</th></tr></thead><tbody>' +
+        todos.map(function (a) {
+          return '<tr><td class="' + (a.done ? 'done' : 'todo') + '">' + (a.done ? '☑ 완료' : '☐ 미완료') + '</td>' +
+            '<td>' + esc(a.task || '') + (a.owner ? ' <span class="owner">(' + esc(a.owner) + ')</span>' : '') + '</td>' +
+            '<td>' + esc(a.due || '-') + '</td></tr>';
+        }).join('') + '</tbody></table>'
+      : '<p class="none">To-do가 정리되지 않았습니다.</p>';
+
+    var logHTML = entries.map(function (e) {
+      var star = e.star ? ' <span class="star">★</span>' : '';
+      if (mini) return '<tr><td class="t">' + fmtClock(e.t) + '</td><td>' + esc(e.src) + star + '</td></tr>';
+      return '<tr><td class="t">' + fmtClock(e.t) + '</td><td>' + esc(e.src) + star +
+        (e.dst ? '<div class="tr">→ ' + esc(e.dst) + '</div>' : '') + '</td></tr>';
+    }).join('');
+
+    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="utf-8"><title>' + esc(m.title || '회의록') + '</title>' +
+      '<style>' +
+        '@page{size:A4;margin:2cm 1.8cm}' +
+        'body{font-family:"Malgun Gothic","\ub9d1\uc740 \uace0\ub515","Dotum",sans-serif;font-size:10.5pt;color:#1F2937;line-height:1.6}' +
+        'h1{font-size:20pt;margin:0 0 4pt;color:#111827}' +
+        '.sub{color:#6B7280;font-size:9pt;margin-bottom:14pt}' +
+        'h2{font-size:13pt;margin:18pt 0 8pt;padding-bottom:4pt;border-bottom:1.5pt solid #10B981;color:#065F46}' +
+        'h3{font-size:10.5pt;margin:12pt 0 4pt;color:#374151}' +
+        'table{border-collapse:collapse;width:100%}' +
+        'table.info th{width:22%;text-align:left;background:#F3F4F6;border:0.5pt solid #D1D5DB;padding:5pt 7pt;font-weight:bold;color:#374151}' +
+        'table.info td{border:0.5pt solid #D1D5DB;padding:5pt 7pt}' +
+        'table.todo th{background:#ECFDF5;border:0.5pt solid #A7F3D0;padding:5pt 7pt;text-align:left;font-size:9.5pt;color:#065F46}' +
+        'table.todo td{border:0.5pt solid #D1D5DB;padding:5pt 7pt;vertical-align:top}' +
+        'td.done{color:#047857;font-weight:bold}td.todo{color:#B45309}' +
+        '.owner{color:#6B7280;font-size:9pt}' +
+        'ul,ol{margin:4pt 0 0 0;padding-left:16pt}' +
+        'li{margin:0 0 3pt}' +
+        '.oneliner{font-size:11.5pt;font-weight:bold;color:#111827;border-left:3pt solid #10B981;padding-left:8pt;margin:0 0 10pt}' +
+        '.none{color:#9CA3AF;font-size:9.5pt}' +
+        'table.log td{border:0.5pt solid #E5E7EB;padding:4pt 6pt;vertical-align:top;font-size:9.5pt}' +
+        'table.log td.t{width:13%;color:#6B7280;font-family:Consolas,monospace;font-size:8.5pt;white-space:nowrap}' +
+        'table.log .tr{color:#4B5563;font-size:9pt;margin-top:2pt}' +
+        '.star{color:#B45309}' +
+        '.foot{margin-top:20pt;color:#9CA3AF;font-size:8pt;border-top:0.5pt solid #E5E7EB;padding-top:6pt}' +
+      '</style></head><body>' +
+      '<h1>회의록</h1>' +
+      '<div class="sub">' + esc(m.title || '') + ' · 미팅메이트</div>' +
+      '<table class="info">' + infoHTML + '</table>' +
+      '<h2>1. 주요사항 요약</h2>' +
+      '<p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
+      '<h3>주요 논의</h3>' + agendaHTML +
+      '<h3>결정 사항</h3>' + decisionsHTML + highlightsHTML +
+      '<h2>2. To-do</h2>' + todoHTML +
+      '<h2>전체 발언 기록</h2>' +
+      '<table class="log"><tbody>' + logHTML + '</tbody></table>' +
+      '<div class="foot">미팅메이트로 작성 · ' + fmtDate(new Date()) + ' · 이 파일은 기기에서 직접 생성되었습니다.</div>' +
+      '</body></html>';
+  }
+
+  function exportMinutesDoc(m) {
+    if (!m) return;
+    if (!m.summary) { toast('회의록 요약을 먼저 만들어 주세요.'); return; }
+    var name = '회의록_' + docDate(new Date(m.startedAt)) + '_' + docSafeName(m.title) + '.doc';
+    var html = minutesDocHTML(m, m.summary);
+    downloadBlob(new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' }), name);
+    toast('회의록 .doc 파일을 저장했습니다. Word·한글에서 바로 열 수 있어요.');
   }
 
   function ensureAudioEl() {
@@ -3219,11 +3689,17 @@ ul.clean.em li::before{background:var(--emerald)}
     var keySaved = !!settings.openaiKey;
     var masked = keySaved ? 'sk-…' + settings.openaiKey.slice(-4) : '';
     openSheet('설정', '' +
-      '<div class="set-group"><h3>번역 방향</h3>' +
+      '<div class="set-group"><h3>회의 모드</h3>' +
+        modePickerHTML() +
+        '<div class="dir-status"><span class="hint">' + (minutesMode()
+          ? '한국어 회의록 — 음성 인식을 ko-KR로 고정하고 구글 번역을 호출하지 않습니다. 자막은 한국어 원문만, 요약은 1. 주요사항 요약 · 2. To-do로 정리됩니다.'
+          : '실시간 통역 — 아래 번역 방향대로 영어·한국어를 번역합니다.') + '</span></div>' +
+      '</div>' +
+      (minutesMode() ? '' : '<div class="set-group"><h3>번역 방향</h3>' +
         dirPickerHTML() +
         '<div class="dir-status"><span class="hint">' + DIR_NOTE[dirMode()] + '</span></div>' +
         '<div class="hint" style="margin-top:8px">고른 방향은 바로 저장됩니다. <b>양방향 자동</b>은 인식된 문장에 한글이 있으면 한국어→영어, 영어면 영어→한국어로 번역하고, 미팅 중 <b>⇄</b> 버튼으로 주 인식 언어(EN/KO)를 바로 바꿉니다.</div>' +
-      '</div>' +
+      '</div>') +
       '<div class="set-group"><h3>번역 엔진</h3>' +
         '<div class="set-row"><div><div class="lbl">Google Translate</div><div class="sub">무료 · 빠름 · 실시간 자막 기본</div></div>' +
           '<button class="chip ' + (settings.engine === 'google' ? 'on' : '') + '" data-act="set-engine" data-v="google" aria-pressed="' + (settings.engine === 'google') + '">사용</button></div>' +
@@ -3327,7 +3803,8 @@ ul.clean.em li::before{background:var(--emerald)}
         engine: settings.engine, model: settings.model, recDefault: settings.recDefault,
         autoScroll: settings.autoScroll, otherLang: settings.otherLang, myLang: settings.myLang,
         dirMode: dirMode(),
-        summaryMode: settings.summaryMode
+        summaryMode: settings.summaryMode,
+        koMinutes: !!settings.koMinutes
       },
       study: study,
       meetings: meetings.map(function (m) {
@@ -3386,6 +3863,12 @@ ul.clean.em li::before{background:var(--emerald)}
       case 'tab': navigate(el.getAttribute('data-tab')); break;
       case 'settings': settingsSheet(); break;
       case 'set-dir': setDirMode(el.getAttribute('data-v')); break;
+      case 'set-minutes': setMinutesMode(el.getAttribute('data-v') !== 'off'); break;
+      case 'save-doc': {
+        var mDoc = findMeeting(id);
+        if (mDoc) exportMinutesDoc(mDoc);
+        break;
+      }
       case 'start': startMeeting({}); break;
       case 'demo': startMeeting({ demo: true }); break;
       case 'pause': togglePause(); break;
@@ -3492,10 +3975,12 @@ ul.clean.em li::before{background:var(--emerald)}
       case 'copy-transcript': {
         var m6 = findMeeting(id);
         if (!m6) break;
+        var miniT = isMinutesMeeting(m6);
         var txt = m6.entries.map(function (x) {
+          if (miniT) return '[' + fmtClock(x.t) + '] ' + x.src + (x.star ? ' ★' : '');
           return '[' + fmtClock(x.t) + '] ' + (x.spk === 'me' ? '나' : '상대') + ' (' + LANG_TAG[x.lang] + ') ' + x.src + '\n   → ' + (x.dst || '');
         }).join('\n');
-        copyText(txt, '전체 자막을 복사했습니다.');
+        copyText(txt, '전체 발언 기록을 복사했습니다.');
         break;
       }
       case 'copy-prompt': {
@@ -3730,7 +4215,7 @@ ul.clean.em li::before{background:var(--emerald)}
       else if (ev.key === 'ArrowRight') { ev.preventDefault(); reviewNext(true); }
       return;
     }
-    if (ev.key === 'Tab' && rt.active && !ev.shiftKey && ev.target.tagName !== 'INPUT' && ev.target.tagName !== 'TEXTAREA') {
+    if (ev.key === 'Tab' && rt.active && !minutesMode() && !ev.shiftKey && ev.target.tagName !== 'INPUT' && ev.target.tagName !== 'TEXTAREA') {
       ev.preventDefault();
       setSpeaker(rt.speaker === 'other' ? 'me' : 'other');
       toast('발언자: ' + speakerName(rt.speaker) + ' (' + LANG_LABEL[langOf(rt.speaker)] + ')');
@@ -3799,13 +4284,17 @@ ul.clean.em li::before{background:var(--emerald)}
         dirMode: dirMode(), listenLang: langOf(rt.speaker),
         audio: !!rt.audio, micTracks: rt.micTracks, recOn: !!(rt.rec.recorder && rt.rec.recorder.state === 'recording'),
         wantMic: rt.wantMic, srState: srStateNow().key, micWarn: rt.micWarn, micAutoFixed: rt.micAutoFixed,
-        interim: rt.interim, interimDst: rt.interimDst, interimPending: rt.interimPending, captionFirst: !!settings.captionFirst
+        interim: rt.interim, interimDst: rt.interimDst, interimPending: rt.interimPending, captionFirst: !!settings.captionFirst,
+        minutes: minutesMode(), mode: minutesMode() ? 'minutes' : 'translate'
       };
     },
     demoLines: demoLines,
     _ruleSummary: ruleSummary,
     _test: {
       dirMode: function () { return dirMode(); },
+      minutes: function () { return minutesMode(); },
+      setMinutes: function (on) { setMinutesMode(on); },
+      docHTML: function (id) { var m = findMeeting(id); return m && m.summary ? minutesDocHTML(m, m.summary) : ''; },
       listenLang: function () { return langOf(rt.speaker); },
       direction: function (text, hint) { return directionFor(text, hint); },
       feed: function (text, spk) { return addUtterance(text, spk || 'other'); },
