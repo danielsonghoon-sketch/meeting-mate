@@ -190,6 +190,7 @@ a{color:var(--indigo-2)}
 .tag.demo{background:rgba(245,158,11,.14);color:#FCD34D;border:1px solid rgba(245,158,11,.32)}
 .tag.gpt{background:rgba(139,92,246,.16);color:#D6C4FF;border:1px solid rgba(139,92,246,.35)}
 .tag.gray{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--line)}
+.tag.dir{letter-spacing:.01em;font-variant-numeric:tabular-nums;white-space:nowrap}
 
 .section-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
 .section-title::after{content:"";height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}
@@ -220,17 +221,28 @@ label.field{display:block;font-size:12px;font-weight:700;color:var(--muted);marg
 .hero p{color:var(--muted);font-size:13.5px;max-width:46ch}
 .hero-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap;align-items:center}
 .hero-actions .btn.start{flex:1 1 220px}
-.dir-row{display:grid;grid-template-columns:1fr auto 1fr;gap:9px;align-items:center;margin-top:16px}
-.dir-card{
-  border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:rgba(255,255,255,.025);
-  display:flex;flex-direction:column;gap:2px;
+.dir-wrap{margin-top:16px}
+.dir-picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.dir-opt{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:9px 6px;border-radius:13px;border:1px solid var(--line);
+  background:rgba(255,255,255,.025);color:var(--txt-2);cursor:pointer;transition:.15s;
+  white-space:nowrap;min-width:0;
 }
-.dir-card b{font-size:13.5px}
-.dir-card span{font-size:10.5px;color:var(--dim);letter-spacing:.04em}
-.dir-card.other{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.09)}
-.dir-card.me{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.07)}
-.dir-arrow{color:var(--dim);display:grid;place-items:center}
-.dir-arrow svg{width:20px;height:20px}
+.dir-opt b{font-size:13px;font-weight:800;letter-spacing:-.01em;line-height:1.25}
+.dir-opt span{font-size:9.5px;font-weight:800;letter-spacing:.05em;color:var(--dim);line-height:1.2}
+.dir-opt:hover{border-color:#33476a;color:#fff}
+.dir-opt[aria-pressed="true"]{
+  background:rgba(99,102,241,.16);border-color:rgba(99,102,241,.6);color:#E9EAFF;
+  box-shadow:0 0 0 1px rgba(99,102,241,.45), 0 10px 24px -20px rgba(99,102,241,1);
+}
+.dir-opt[aria-pressed="true"] b{color:#EFEFFF}
+.dir-opt[aria-pressed="true"] span{color:#A5B4FC}
+.dir-status{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.dir-status .hint{flex:1 1 140px;min-width:0}
+.dir-swap{flex:0 0 auto;padding:5px 10px;font-size:11.5px;gap:5px}
+.dir-swap b{font-weight:800;color:var(--txt-2)}
+.dir-swap svg{width:14px;height:14px;flex:0 0 14px}
 
 .feature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 .feature{border:1px solid var(--line-soft);border-radius:15px;padding:13px;background:rgba(255,255,255,.02)}
@@ -260,14 +272,16 @@ label.field{display:block;font-size:12px;font-weight:700;color:var(--muted);marg
 .level.idle i{background:var(--dim);height:4px}
 .meter-note{font-size:9.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase}
 
-.speaker-switch{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:12px}
+.speaker-switch{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
 .spk{
-  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:14px;
+  display:flex;align-items:center;gap:8px;padding:10px;border-radius:14px;min-width:0;
   border:1px solid var(--line);background:rgba(255,255,255,.025);cursor:pointer;text-align:left;transition:.15s;
 }
-.spk .av{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:11px;font-weight:800;letter-spacing:.02em;flex:0 0 34px}
-.spk .sp1{font-size:12.5px;font-weight:800;line-height:1.25}
-.spk .sp2{font-size:10.5px;color:var(--dim);line-height:1.3}
+.spk .av{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:10.5px;font-weight:800;letter-spacing:.02em;flex:0 0 32px}
+.spk .sp-wrap{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1 1 auto}
+.spk .sp1{font-size:12.5px;font-weight:800;line-height:1.25;white-space:nowrap;display:block}
+.spk .sp2{font-size:9.5px;color:var(--dim);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.spk.off{opacity:.45}
 .spk[data-spk="other"] .av{background:rgba(99,102,241,.18);color:#B9BAFF}
 .spk[data-spk="me"] .av{background:rgba(16,185,129,.16);color:#8DEBC8}
 .spk[aria-pressed="true"][data-spk="other"]{border-color:var(--indigo);background:rgba(99,102,241,.16);box-shadow:0 0 0 1px rgba(99,102,241,.5), 0 10px 24px -18px #6366F1}
@@ -532,12 +546,14 @@ ul.clean.em li::before{background:var(--emerald)}
   .captions{max-height:50dvh}
   .summary-actions{grid-template-columns:repeat(4,1fr)}
   .hero h1{font-size:30px}
+  .dir-picker{max-width:600px}
   .sheet{border-radius:24px;border-bottom:1px solid var(--line);margin:auto;max-height:88dvh;padding-bottom:22px}
   .sheet-back{align-items:center;padding:24px}
 }
 @media (max-width:560px){
   .study-tools .search-wrap{flex:1 1 100%}
   .study-tools .btn.primary{margin-left:auto}
+  .session .captions{max-height:46dvh}
 }
 @media (max-width:380px){
   .brand-sub{display:none}
@@ -546,8 +562,14 @@ ul.clean.em li::before{background:var(--emerald)}
   .study-stats{grid-template-columns:1fr 1fr 1fr;gap:6px}
   .stat b{font-size:18px}
   .study-tools .search-wrap{flex:1 1 100%}
-  .dir-row{grid-template-columns:1fr;gap:6px}
-  .dir-arrow{transform:rotate(90deg)}
+}
+@media (max-width:400px){
+  .dir-opt{padding:8px 4px}
+  .dir-opt b{font-size:12px}
+  .spk{padding:9px 8px;gap:7px}
+  .spk .av{width:26px;height:26px;flex:0 0 26px;font-size:9.5px}
+  .spk .sp1{font-size:12px}
+  .spk .sp2{font-size:9px}
 }
 @media (prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
@@ -610,7 +632,7 @@ ul.clean.em li::before{background:var(--emerald)}
 (function () {
   'use strict';
 
-  var BUILD = 'cd4df5fd15';
+  var BUILD = '814d6331b8';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -630,6 +652,7 @@ ul.clean.em li::before{background:var(--emerald)}
     autoScroll: true,
     otherLang: 'en',
     myLang: 'ko',
+    dirMode: 'auto',
     ttsRate: 1,
     summaryMode: 'auto'
   };
@@ -637,6 +660,16 @@ ul.clean.em li::before{background:var(--emerald)}
   var LANG_LABEL = { en: 'English', ko: '한국어' };
   var LANG_TAG = { en: 'EN', ko: 'KO' };
   var LANG_BCP = { en: 'en-US', ko: 'ko-KR' };
+
+  /* 번역 방향 — en2ko(영→한) · ko2en(한→영) · auto(양방향 자동) */
+  var DIR_MODES = ['en2ko', 'ko2en', 'auto'];
+  var DIR_LABEL = { en2ko: '영 → 한', ko2en: '한 → 영', auto: '양방향 자동' };
+  var DIR_TAG = { en2ko: 'EN → KO', ko2en: 'KO → EN', auto: '한 ↔ 영' };
+  var DIR_NOTE = {
+    en2ko: '영어를 인식해 한국어로 번역합니다.',
+    ko2en: '한국어를 인식해 영어로 번역합니다.',
+    auto: '영어는 한국어로, 한국어는 영어로 자동 번역합니다.'
+  };
 
   /* ── tiny utils ───────────────────────────────────────────── */
   function $(sel, root) { return (root || document).querySelector(sel); }
@@ -787,9 +820,87 @@ ul.clean.em li::before{background:var(--emerald)}
   function saveMeetings() { persist(K.meetings, meetings); }
   function saveStudy() { persist(K.study, study); }
 
-  function langOf(spk) { return spk === 'other' ? settings.otherLang : settings.myLang; }
-  function targetLang(spk) { return spk === 'other' ? settings.myLang : settings.otherLang; }
   function speakerName(spk) { return spk === 'other' ? '상대' : '나'; }
+
+  /* ═══════════════════════════════════════════════════════════
+     언어 방향 — 영→한 · 한→영 · 양방향 자동
+     ═══════════════════════════════════════════════════════════ */
+  function dirMode() {
+    return settings.dirMode === 'en2ko' || settings.dirMode === 'ko2en' ? settings.dirMode : 'auto';
+  }
+  function fixedSourceLang() {
+    var m = dirMode();
+    return m === 'en2ko' ? 'en' : (m === 'ko2en' ? 'ko' : '');
+  }
+  function speakerLang(spk) { return spk === 'other' ? 'en' : 'ko'; }
+  function opponentLang(l) { return l === 'ko' ? 'en' : 'ko'; }
+  function langOf(spk) { return fixedSourceLang() || speakerLang(spk); }
+  function targetLang(spk) { return opponentLang(langOf(spk)); }
+  function countHangul(text) {
+    var m = String(text == null ? '' : text).match(/[\u1100-\u11FF\u3130-\u318F\uAC00-\uD7A3]/g);
+    return m ? m.length : 0;
+  }
+  function countLatin(text) {
+    var m = String(text == null ? '' : text).match(/[A-Za-z]/g);
+    return m ? m.length : 0;
+  }
+  /* 방향 고정 모드는 그 방향, 양방향 자동은 한글이 있으면 ko→en · 영문이면 en→ko */
+  function detectSrcLang(text, hint) {
+    var fixed = fixedSourceLang();
+    if (fixed) return fixed;
+    if (countHangul(text)) return 'ko';
+    if (countLatin(text)) return 'en';
+    return hint === 'ko' ? 'ko' : 'en';
+  }
+  function directionFor(text, hint) {
+    var sl = detectSrcLang(text, hint);
+    return { sl: sl, tl: opponentLang(sl) };
+  }
+  function dirLabel(sl, tl) { return LANG_LABEL[sl] + ' → ' + LANG_LABEL[tl]; }
+  function entryDirTag(entry) {
+    var d = entry.dir || directionFor(entry.src, entry.lang);
+    return LANG_TAG[d.sl] + '→' + LANG_TAG[d.tl];
+  }
+
+  function dirPickerHTML() {
+    return '<div class="dir-picker" role="group" aria-label="번역 방향">' +
+      DIR_MODES.map(function (m) {
+        return '<button class="dir-opt" data-act="set-dir" data-v="' + m + '" aria-pressed="' + (dirMode() === m) + '">' +
+          '<b>' + DIR_LABEL[m] + '</b><span>' + DIR_TAG[m] + '</span></button>';
+      }).join('') + '</div>';
+  }
+  function dirSwapHTML() {
+    if (dirMode() !== 'auto') return '';
+    return '<button class="chip dir-swap" data-act="swap" aria-label="주 인식 언어 바꾸기" title="주 인식 언어 바꾸기 (키보드 Tab)">' +
+      I.swap + '<b>지금 ' + LANG_TAG[langOf(rt.speaker)] + '</b></button>';
+  }
+  function dirBlockHTML(withSwap) {
+    var m = dirMode();
+    return '<div class="dir-wrap">' + dirPickerHTML() +
+      '<div class="dir-status"><span class="hint">' + DIR_NOTE[m] + '</span>' +
+      (withSwap ? dirSwapHTML() : '') + '</div></div>';
+  }
+  function retuneRecognition() {
+    if (!rt.active || rt.demo || !rt.wantMic || !rt.recognize) return;
+    try {
+      rt.recognize.lang = LANG_BCP[langOf(rt.speaker)];
+      rt.speakerDirty = true;
+      rt.recognize.stop();
+      rt.speakerDirty = false;
+    } catch (e) {}
+  }
+  function setDirMode(mode) {
+    var m = DIR_MODES.indexOf(mode) >= 0 ? mode : 'auto';
+    settings.dirMode = m;
+    saveSettings();
+    rt.interim = '';
+    if (m === 'en2ko') rt.speaker = 'other';
+    if (m === 'ko2en') rt.speaker = 'me';
+    retuneRecognition();
+    renderMain();
+    if ($('#sheetRoot') && !$('#sheetRoot').hidden) settingsSheet();
+    toast('번역 방향 · ' + DIR_LABEL[m] + ' (' + DIR_TAG[m] + ')');
+  }
 
   /* ═══════════════════════════════════════════════════════════
      IndexedDB — 회의 녹음 오디오
@@ -1001,8 +1112,10 @@ ul.clean.em li::before{background:var(--emerald)}
 
   function requestTranslation(entry) {
     entry.pending = true;
+    var dir = entry.dir || directionFor(entry.src, entry.lang);
+    entry.dir = dir;
     enqueue(function () {
-      return translateText(entry.src, entry.lang, entry.lang === 'en' ? 'ko' : 'en')
+      return translateText(entry.src, dir.sl, dir.tl)
         .then(function (t) {
           entry.dst = t;
           entry.pending = false;
@@ -1114,7 +1227,13 @@ ul.clean.em li::before{background:var(--emerald)}
   }
 
   function setSpeaker(spk) {
-    if (rt.speaker === spk && !rt.speakerDirty) { /* still refresh UI */ }
+    var fixed = fixedSourceLang();
+    if (fixed && fixed !== speakerLang(spk)) {
+      toast(fixed === 'en'
+        ? '지금은 영 → 한 모드입니다. 한국어도 인식하려면 양방향 자동으로 바꿔 주세요.'
+        : '지금은 한 → 영 모드입니다. 영어도 인식하려면 양방향 자동으로 바꿔 주세요.');
+      return;
+    }
     rt.speaker = spk;
     rt.interim = '';
     renderInterim();
@@ -1122,15 +1241,10 @@ ul.clean.em li::before{background:var(--emerald)}
       b.setAttribute('aria-pressed', b.getAttribute('data-spk') === spk ? 'true' : 'false');
     });
     var lbl = $('#activeSpkLabel');
-    if (lbl) lbl.textContent = speakerName(spk) + ' · ' + LANG_LABEL[langOf(spk)];
-    if (rt.active && !rt.demo && rt.wantMic && rt.recognize) {
-      try {
-        rt.recognize.lang = LANG_BCP[langOf(spk)];
-        rt.speakerDirty = true;
-        rt.recognize.stop();
-        rt.speakerDirty = false;
-      } catch (e) {}
-    }
+    if (lbl) lbl.textContent = speakerName(spk) + ' · ' + dirLabel(langOf(spk), targetLang(spk));
+    var swap = $('.dir-swap b');
+    if (swap) swap.textContent = '지금 ' + LANG_TAG[langOf(spk)];
+    retuneRecognition();
   }
 
   /* ── TTS ──────────────────────────────────────────────────── */
@@ -1407,12 +1521,15 @@ ul.clean.em li::before{background:var(--emerald)}
 
   function addUtterance(text, spk, opts) {
     opts = opts || {};
-    var lang = opts.lang || langOf(spk);
+    var hint = opts.lang || langOf(spk);
+    var dir = opts.dir || (opts.lang ? { sl: opts.lang, tl: opponentLang(opts.lang) } : directionFor(text, hint));
+    var lang = dir.sl;
     var entry = {
       i: rt.entries.length,
       t: Math.round(elapsedMs()),
       spk: spk,
       lang: lang,
+      dir: dir,
       src: text,
       dst: opts.dst || '',
       pending: !opts.dst && !opts.noTranslate,
@@ -1465,7 +1582,7 @@ ul.clean.em li::before{background:var(--emerald)}
     return '<div class="' + cls + '" id="cap-' + entry.i + '" data-i="' + entry.i + '">' +
       '<div class="cap-head">' +
         '<span class="cap-time">' + fmtClock(entry.t) + '</span>' +
-        '<span class="tag ' + entry.lang + '">' + LANG_TAG[entry.lang] + '</span>' +
+        '<span class="tag ' + entry.lang + ' dir">' + entryDirTag(entry) + '</span>' +
         (entry.spk === 'me' ? '<span class="tag gray">나</span>' : '') +
         (entry.demo ? '<span class="tag demo">DEMO</span>' : '') +
         '<span class="cap-actions">' +
@@ -1494,7 +1611,7 @@ ul.clean.em li::before{background:var(--emerald)}
     if (!rt.interim) { el.classList.add('hide'); el.innerHTML = ''; return; }
     el.classList.remove('hide');
     el.className = 'interim' + (rt.interimSpk === 'me' ? ' me' : '');
-    el.innerHTML = '<span class="who">' + (rt.interimSpk === 'me' ? '나' : '상대') + ' ' + LANG_TAG[langOf(rt.interimSpk)] + '</span>' +
+    el.innerHTML = '<span class="who">' + (rt.interimSpk === 'me' ? '나' : '상대') + ' ' + entryDirTag({ src: rt.interim, lang: langOf(rt.interimSpk) }) + '</span>' +
       '<span>' + esc(rt.interim) + '<span class="dots"></span></span>';
   }
 
@@ -1511,7 +1628,7 @@ ul.clean.em li::before{background:var(--emerald)}
     rt.pauseMark = 0;
     rt.entries = [];
     rt.interim = '';
-    rt.speaker = 'other';
+    rt.speaker = fixedSourceLang() === 'ko' ? 'me' : 'other';
     rt.autoscroll = true;
     rt.micError = '';
     rt.transError = '';
@@ -1559,7 +1676,8 @@ ul.clean.em li::before{background:var(--emerald)}
 
   function playDemo() {
     var fast = /[?&]demo=fast/.test(location.search);
-    var lines = demoLines();
+    var fixed = fixedSourceLang();
+    var lines = demoLines().filter(function (l) { return !fixed || l.lang === fixed; });
     var i = 0;
     var cancelled = false;
     rt.demoAbort = function () { cancelled = true; };
@@ -1622,7 +1740,7 @@ ul.clean.em li::before{background:var(--emerald)}
       durationMs: durationMs,
       demo: rt.demo,
       entries: rt.entries.map(function (e) {
-        return { i: e.i, t: e.t, spk: e.spk, lang: e.lang, src: e.src, dst: e.dst, star: e.star, demo: e.demo };
+        return { i: e.i, t: e.t, spk: e.spk, lang: e.lang, dir: e.dir, src: e.src, dst: e.dst, star: e.star, demo: e.demo };
       }),
       summary: null,
       summaryState: 'pending',
@@ -2135,11 +2253,7 @@ ul.clean.em li::before{background:var(--emerald)}
         '<span class="hero-kicker"><span class="dot"></span>LIVE INTERPRETER · AUTO NOTES</span>' +
         '<h1>미팅은 그대로,<br><em>통역과 기록은 여기서.</em></h1>' +
         '<p>마이크로 상대의 영어와 내 한국어를 실시간 자막으로 바꾸고, 자동 녹음·요약·비즈니스 표현 스터디까지 한 번에 남깁니다.</p>' +
-        '<div class="dir-row">' +
-          '<div class="dir-card other"><b>' + LANG_LABEL[settings.otherLang] + ' (상대)</b><span>' + LANG_TAG[settings.otherLang] + ' → ' + LANG_TAG[settings.myLang] + ' 자동 번역</span></div>' +
-          '<div class="dir-arrow">' + I.arrow + '</div>' +
-          '<div class="dir-card me"><b>' + LANG_LABEL[settings.myLang] + ' (나)</b><span>' + LANG_TAG[settings.myLang] + ' → ' + LANG_TAG[settings.otherLang] + ' 자동 번역</span></div>' +
-        '</div>' +
+        dirBlockHTML(false) +
         '<div class="hero-actions">' +
           '<button class="btn start" data-act="start" id="startBtn">' + I.mic + ' 미팅 시작</button>' +
           '<button class="btn ghost" data-act="demo" id="demoBtn">데모 미팅</button>' +
@@ -2151,7 +2265,7 @@ ul.clean.em li::before{background:var(--emerald)}
         '</div>' +
       '</section>' +
       '<section class="feature-grid">' +
-        '<div class="feature"><div class="fi">' + I.mic + '</div><b>실시간 자막</b><span>상대 EN ↔ 나 KO, 1탭 전환으로 양방향 통역</span></div>' +
+        '<div class="feature"><div class="fi">' + I.mic + '</div><b>실시간 자막</b><span>영→한 · 한→영 · 양방향 자동, 1탭 전환</span></div>' +
         '<div class="feature"><div class="fi">' + I.speaker + '</div><b>자동 녹음</b><span>미팅 시작과 동시에 녹음, 종료 후 바로 재생·저장</span></div>' +
         '<div class="feature"><div class="fi">' + I.spark + '</div><b>요약 · 표현</b><span>핵심·결정·액션 아이템과 고급 표현을 뽑아 스터디로</span></div>' +
       '</section>' +
@@ -2175,6 +2289,18 @@ ul.clean.em li::before{background:var(--emerald)}
       '</div>';
   }
 
+  function speakerBtnHTML(spk) {
+    var sl = speakerLang(spk), tl = opponentLang(sl);
+    var fixed = fixedSourceLang();
+    var off = !!fixed && fixed !== sl;
+    var label = dirLabel(sl, tl);
+    return '<button class="spk' + (off ? ' off' : '') + '" data-act="spk" data-spk="' + spk + '" aria-pressed="' + (rt.speaker === spk) + '"' + (off ? ' aria-disabled="true"' : '') + '>' +
+      '<span class="av">' + LANG_TAG[sl] + '</span>' +
+      '<span class="sp-wrap"><span class="sp1">' + (spk === 'other' ? '상대 말하는 중' : '내가 말하는 중') + '</span>' +
+      '<span class="sp2" title="' + label + '">' + label + '</span></span>' +
+      '<span class="live-bars"><i></i><i></i><i></i></span></button>';
+  }
+
   function sessionHTML() {
     var recOn = rt.rec.recorder && rt.rec.recorder.state === 'recording';
     var bars = '';
@@ -2185,23 +2311,15 @@ ul.clean.em li::before{background:var(--emerald)}
           '<span class="' + (rt.paused ? 'rec-dot' : 'rec-dot') + '" style="' + (rt.paused ? 'background:#F59E0B;box-shadow:0 0 0 4px rgba(245,158,11,.15)' : '') + '"></span>' +
           '<div class="timer" id="timerVal">' + fmtClock(elapsedMs()) + '</div>' +
           '<div class="session-meta"><span class="s1">' + (rt.paused ? '일시정지' : (rt.demo ? '데모 미팅 진행 중' : '미팅 진행 중')) + '</span>' +
-            '<span class="s2" id="activeSpkLabel">' + speakerName(rt.speaker) + ' · ' + LANG_LABEL[langOf(rt.speaker)] + '</span></div>' +
+            '<span class="s2" id="activeSpkLabel">' + speakerName(rt.speaker) + ' · ' + dirLabel(langOf(rt.speaker), targetLang(rt.speaker)) + '</span></div>' +
           '<div class="level" id="levelBars">' + bars + '</div>' +
         '</div>' +
-        '<div class="speaker-switch">' +
-          '<button class="spk" data-act="spk" data-spk="other" aria-pressed="' + (rt.speaker === 'other') + '">' +
-            '<span class="av">' + LANG_TAG[settings.otherLang] + '</span>' +
-            '<span><span class="sp1">상대 말하는 중</span><span class="sp2">' + LANG_LABEL[settings.otherLang] + ' → ' + LANG_LABEL[settings.myLang] + '</span></span>' +
-            '<span class="live-bars"><i></i><i></i><i></i></span></button>' +
-          '<button class="spk" data-act="spk" data-spk="me" aria-pressed="' + (rt.speaker === 'me') + '">' +
-            '<span class="av">' + LANG_TAG[settings.myLang] + '</span>' +
-            '<span><span class="sp1">내가 말하는 중</span><span class="sp2">' + LANG_LABEL[settings.myLang] + ' → ' + LANG_LABEL[settings.otherLang] + '</span></span>' +
-            '<span class="live-bars"><i></i><i></i><i></i></span></button>' +
-        '</div>' +
+        dirBlockHTML(true) +
+        '<div class="speaker-switch">' + speakerBtnHTML('other') + speakerBtnHTML('me') + '</div>' +
         '<div class="caption-tools">' +
           '<span class="tiny dim" id="utteranceCount">' + rt.entries.length + '개 발언</span>' +
           '<span class="tiny dim">·</span>' +
-          '<button class="chip" data-act="swap" title="발언자 빠른 전환 (키보드 Tab)">' + I.swap + ' 빠른 전환</button>' +
+          '<span class="tiny dim" id="dirMini">' + DIR_TAG[dirMode()] + '</span>' +
           '<span class="spacer"></span>' +
           '<button class="rec-toggle" data-act="toggle-rec" aria-pressed="' + (!!recOn) + '"><span class="sw"></span>녹음</button>' +
         '</div>' +
@@ -2681,6 +2799,11 @@ ul.clean.em li::before{background:var(--emerald)}
     var keySaved = !!settings.openaiKey;
     var masked = keySaved ? 'sk-…' + settings.openaiKey.slice(-4) : '';
     openSheet('설정', '' +
+      '<div class="set-group"><h3>번역 방향</h3>' +
+        dirPickerHTML() +
+        '<div class="dir-status"><span class="hint">' + DIR_NOTE[dirMode()] + '</span></div>' +
+        '<div class="hint" style="margin-top:8px">고른 방향은 바로 저장됩니다. <b>양방향 자동</b>은 인식된 문장에 한글이 있으면 한국어→영어, 영어면 영어→한국어로 번역하고, 미팅 중 <b>⇄</b> 버튼으로 주 인식 언어(EN/KO)를 바로 바꿉니다.</div>' +
+      '</div>' +
       '<div class="set-group"><h3>번역 엔진</h3>' +
         '<div class="set-row"><div><div class="lbl">Google Translate</div><div class="sub">무료 · 빠름 · 실시간 자막 기본</div></div>' +
           '<button class="chip ' + (settings.engine === 'google' ? 'on' : '') + '" data-act="set-engine" data-v="google" aria-pressed="' + (settings.engine === 'google') + '">사용</button></div>' +
@@ -2708,12 +2831,6 @@ ul.clean.em li::before{background:var(--emerald)}
           '<button class="switch" data-act="toggle-rec-default" aria-pressed="' + (settings.recDefault ? 'true' : 'false') + '" aria-label="자동 녹음"></button></div>' +
         '<div class="set-row"><div><div class="lbl">자막 자동 스크롤</div><div class="sub">새 발언이 오면 맨 아래로</div></div>' +
           '<button class="switch" data-act="toggle-autoscroll" aria-pressed="' + (settings.autoScroll ? 'true' : 'false') + '" aria-label="자동 스크롤"></button></div>' +
-        '<div class="set-row"><div><div class="lbl">언어 방향</div><div class="sub">상대와 내 언어를 바꿉니다</div></div>' +
-          '<div class="row" style="gap:6px"><select data-act="set-other-lang" style="width:auto">' +
-            ['en', 'ko'].map(function (l) { return '<option value="' + l + '"' + (settings.otherLang === l ? ' selected' : '') + '>상대 ' + LANG_LABEL[l] + '</option>'; }).join('') +
-          '</select><select data-act="set-my-lang" style="width:auto">' +
-            ['ko', 'en'].map(function (l) { return '<option value="' + l + '"' + (settings.myLang === l ? ' selected' : '') + '>나 ' + LANG_LABEL[l] + '</option>'; }).join('') +
-          '</select></div></div>' +
       '</div>' +
       '<div class="set-group"><h3>데이터</h3>' +
         '<div class="set-row"><div><div class="lbl">백업 내보내기</div><div class="sub">미팅 기록·표현 (녹음 오디오·API 키 제외)</div></div>' +
@@ -2754,7 +2871,7 @@ ul.clean.em li::before{background:var(--emerald)}
         '<p class="small muted" style="margin:0 0 8px">미팅 중 <b>시스템 오디오</b> 버튼을 누르고, 공유 창에서 <b>탭 오디오 공유</b>(Chrome)를 켜면 상대 목소리가 <b>녹음 파일</b>에 함께 담깁니다.</p>' +
         '<div class="hint">자막은 여전히 마이크 기준입니다. 시스템 오디오는 녹음 전용입니다.</div></div>' +
       '<div class="set-group"><h3>언어 전환</h3>' +
-        '<p class="small muted" style="margin:0">브라우저의 음성 인식은 말하는 언어를 자동으로 알아내지 못합니다. 그래서 상대가 말할 때 <b>상대(English)</b>, 내가 말할 때 <b>나(한국어)</b>를 1탭(PC는 Tab 키)으로 바꾸는 방식입니다. 설정의 <b>언어 방향</b>에서 두 언어를 바꿀 수 있습니다.</p></div>' +
+        '<p class="small muted" style="margin:0">브라우저의 음성 인식은 말하는 언어를 자동으로 알아내지 못합니다. 그래서 <b>번역 방향</b>으로 무엇을 인식할지 정합니다. <b>영 → 한</b>은 영어만 인식해 한국어 자막을, <b>한 → 영</b>은 한국어만 인식해 영어 자막을 만듭니다. <b>양방향 자동</b>은 상대(English)와 나(한국어)를 1탭(PC는 Tab 키)으로 바꾸며, 인식된 문장에 한글이 있으면 한국어→영어, 영어면 영어→한국어로 번역합니다.</p></div>' +
       '<div class="set-group"><h3>휴대폰 대면 미팅</h3>' +
         '<p class="small muted" style="margin:0">테이블 가운데에 폰을 두고 스피커폰처럼 사용하세요. 통역이 필요할 때 상대에게 \"I\'m using a live interpreter app\"이라고 미리 말해 두면 자연스럽습니다.</p></div>' +
       '<button class="btn primary wide" data-act="close-sheet">알겠습니다</button>');
@@ -2784,6 +2901,7 @@ ul.clean.em li::before{background:var(--emerald)}
       settings: {
         engine: settings.engine, model: settings.model, recDefault: settings.recDefault,
         autoScroll: settings.autoScroll, otherLang: settings.otherLang, myLang: settings.myLang,
+        dirMode: dirMode(),
         summaryMode: settings.summaryMode
       },
       study: study,
@@ -2842,6 +2960,7 @@ ul.clean.em li::before{background:var(--emerald)}
     switch (act) {
       case 'tab': navigate(el.getAttribute('data-tab')); break;
       case 'settings': settingsSheet(); break;
+      case 'set-dir': setDirMode(el.getAttribute('data-v')); break;
       case 'start': startMeeting({}); break;
       case 'demo': startMeeting({ demo: true }); break;
       case 'pause': togglePause(); break;
@@ -3145,16 +3264,6 @@ ul.clean.em li::before{background:var(--emerald)}
     var t = ev.target;
     if (t.id === 'studyImport' && t.files && t.files[0]) { importBackup(t.files[0]); t.value = ''; }
     if (t.id === 'backupImport' && t.files && t.files[0]) { importBackup(t.files[0]); t.value = ''; }
-    if (t.getAttribute('data-act') === 'set-other-lang') {
-      settings.otherLang = t.value;
-      if (settings.otherLang === settings.myLang) settings.myLang = settings.otherLang === 'en' ? 'ko' : 'en';
-      saveSettings(); renderMain(); settingsSheet();
-    }
-    if (t.getAttribute('data-act') === 'set-my-lang') {
-      settings.myLang = t.value;
-      if (settings.otherLang === settings.myLang) settings.otherLang = settings.myLang === 'en' ? 'ko' : 'en';
-      saveSettings(); renderMain(); settingsSheet();
-    }
     if (t.getAttribute('data-act') === 'set-summary-mode') {
       settings.summaryMode = t.value;
       if (t.value === 'gpt' && !settings.openaiKey) toast('GPT 요약에는 OpenAI 키가 필요합니다.');
@@ -3240,13 +3349,19 @@ ul.clean.em li::before{background:var(--emerald)}
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  // 테스트/디버그용 최소 노출 (읽기 전용 정보)
+  // 테스트/디버그용 최소 노출 (읽기 전용 정보 + 방향 점검용 훅)
   window.MeetingMate = {
     version: VERSION,
     build: BUILD,
-    get state() { return { tab: ui.tab, active: rt.active, entries: rt.entries.length, meetings: meetings.length, study: study.length }; },
+    get state() { return { tab: ui.tab, active: rt.active, entries: rt.entries.length, meetings: meetings.length, study: study.length, dirMode: dirMode(), listenLang: langOf(rt.speaker) }; },
     demoLines: demoLines,
-    _ruleSummary: ruleSummary
+    _ruleSummary: ruleSummary,
+    _test: {
+      dirMode: function () { return dirMode(); },
+      listenLang: function () { return langOf(rt.speaker); },
+      direction: function (text, hint) { return directionFor(text, hint); },
+      feed: function (text, spk) { return addUtterance(text, spk || 'other'); }
+    }
   };
 })();
 
