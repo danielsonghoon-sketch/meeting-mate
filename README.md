@@ -44,7 +44,7 @@ meeting-mate/
   build.py                 # 검증 + 단일 index.html/PWA 자산 빌드 (build/)
   src/
     index.template.html    # 셸(탑바·탭바·토스트)
-    styles.css             # 다크 슬레이트 + 인디igo/에메랄드 테마
+    styles.css             # 다크 슬레이트 + 인디고/에메랄드 테마
     app.js                 # 자막·번역·녹음·요약·스터디·복습 전체 로직
     sw.template.js         # 빌드 해시 캐시 서비스워커
   tools/make_icons.py      # PWA 아이콘(Pillow)
