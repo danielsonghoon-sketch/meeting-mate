@@ -563,6 +563,9 @@ ul.clean.em li::before{background:var(--emerald)}
 .set-row > .row{flex-wrap:wrap;justify-content:flex-end;max-width:100%}
 .set-row select{max-width:100%}
 .set-row + .set-row{border-top:1px solid rgba(34,49,76,.5)}
+.set-row.tight{flex-wrap:nowrap;align-items:flex-start}
+.set-row.tight > div:first-child{flex:1 1 auto;min-width:0}
+.set-row.tight .switch{margin-top:1px}
 .set-row .lbl{font-size:13px;font-weight:700}
 .set-row .sub{font-size:11px;color:var(--dim);margin-top:1px;line-height:1.45}
 .switch{width:46px;height:26px;border-radius:99px;background:#26354F;border:0;position:relative;cursor:pointer;flex:0 0 46px}
@@ -680,7 +683,7 @@ ul.clean.em li::before{background:var(--emerald)}
 (function () {
   'use strict';
 
-  var BUILD = 'aa0f40b343';
+  var BUILD = '3d2463d9aa';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -3248,10 +3251,10 @@ ul.clean.em li::before{background:var(--emerald)}
           '<button class="switch" data-act="toggle-rec-default" aria-pressed="' + (settings.recDefault ? 'true' : 'false') + '" aria-label="자동 녹음"></button></div>' +
         '<div class="set-row"><div><div class="lbl">자막 자동 스크롤</div><div class="sub">새 발언이 오면 맨 아래로</div></div>' +
           '<button class="switch" data-act="toggle-autoscroll" aria-pressed="' + (settings.autoScroll ? 'true' : 'false') + '" aria-label="자동 스크롤"></button></div>' +
-        '<div class="set-row"><div><div class="lbl">실시간 자막 우선' + (IS_MOBILE ? ' (모바일 권장)' : '') + '</div>' +
+        '<div class="set-row tight"><div><div class="lbl">실시간 자막 우선' + (IS_MOBILE ? ' (모바일 권장)' : '') + '</div>' +
           '<div class="sub">' + (IS_MOBILE
-            ? '켜면 안드로이드에서 녹음 없이 시작해 자막·번역을 먼저 살립니다. 충돌이 감지되면 자동으로 이 모드로 바꿉니다.'
-            : '데스크톱은 끄는 것을 권장합니다 (녹음+자막 동시 동작)') + '</div></div>' +
+            ? '녹음 없이 시작해 자막·번역을 먼저 살립니다. 충돌이 감지되면 자동으로 켜집니다.'
+            : '데스크톱은 끄는 것을 권장합니다 (녹음+자막 동시)') + '</div></div>' +
           '<button class="switch" data-act="toggle-caption-first" aria-pressed="' + (settings.captionFirst ? 'true' : 'false') + '" aria-label="실시간 자막 우선"></button></div>' +
       '</div>' +
       '<div class="set-group"><h3>데이터</h3>' +
