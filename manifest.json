@@ -1,0 +1,56 @@
+{
+  "name": "미팅메이트 — 실시간 번역 미팅 코파일럿",
+  "short_name": "미팅메이트",
+  "description": "구글 실시간 번역으로 비즈니스 미팅을 자막·녹음·요약하고 주요 표현을 스터디로 모아 주는 미팅 코파일럿",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070B14",
+  "theme_color": "#070B14",
+  "categories": [
+    "business",
+    "productivity",
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "새 미팅 시작",
+      "short_name": "미팅",
+      "url": "./?action=start"
+    },
+    {
+      "name": "표현 스터디",
+      "short_name": "스터디",
+      "url": "./#study"
+    }
+  ]
+}
