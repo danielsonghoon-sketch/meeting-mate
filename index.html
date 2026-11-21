@@ -754,7 +754,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
 (function () {
   'use strict';
 
-  var BUILD = 'a989b01996';
+  var BUILD = '9932a07bea';
   var VERSION = '1.0.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
@@ -3302,7 +3302,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       '<section class="feature-grid">' +
         '<div class="feature"><div class="fi">' + I.mic + '</div><b>' + (mini ? '한국어 받아쓰기' : '실시간 자막') + '</b><span>' + (mini ? 'ko-KR 고정 · 구글 번역 호출 없음' : '영→한 · 한→영 · 양방향 자동, 1탭 전환') + '</span></div>' +
         '<div class="feature"><div class="fi">' + I.speaker + '</div><b>자동 녹음</b><span>미팅 시작과 동시에 녹음, 종료 후 바로 재생·저장</span></div>' +
-        '<div class="feature"><div class="fi">' + I.doc + '</div><b>' + (mini ? '회의록 · To-do' : '요약 · 표현') + '</b><span>' + (mini ? '1. 주요사항 요약 · 2. To-do · .doc 저장' : '핵심·결정·액션 아이템과 고급 표현을 뽑아 스터디로') + '</span></div>' +
+        '<div class="feature"><div class="fi">' + I.doc + '</div><b>' + (mini ? '회의록 · To-do' : '요약 · 표현') + '</b><span>' + (mini ? '1. 주요사항 요약 · 2. To-do · .docx 저장' : '핵심·결정·액션 아이템과 고급 표현을 뽑아 스터디로') + '</span></div>' +
       '</section>' +
       '<section class="card guide-card">' +
         '<h3>' + I.mic + ' 오프라인 · 대면 미팅</h3>' +
@@ -3472,7 +3472,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       '<div class="row" style="gap:8px;padding:4px 2px 0;flex-wrap:wrap">' +
         '<button class="btn sm ghost" data-act="back-summary">' + I.back + ' 요약 목록</button>' +
         '<span class="spacer" style="flex:1"></span>' +
-        '<button class="btn sm soft doc-btn" data-act="save-doc" data-id="' + m.id + '">' + I.download + ' 회의록 .doc 저장</button>' +
+        '<button class="btn sm soft doc-btn" data-act="save-doc" data-id="' + m.id + '">' + I.download + ' 회의록 .docx 저장</button>' +
         '<button class="btn sm ghost" data-act="rename" data-id="' + m.id + '">제목 수정</button>' +
       '</div>' +
       '<section class="card detail-head">' +
@@ -3540,7 +3540,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       '<section class="card summary-block minutes-block">' +
         '<h2>' + I.check + ' 2. To-do <span class="tiny dim" style="text-transform:none;letter-spacing:0">' + todos.length + '</span></h2>' +
         (todoRows || '<p class="small dim">추출된 To-do가 없습니다. 자막에서 ★를 누르면 중요 문장이 요약에 우선 반영됩니다.</p>') +
-        (todos.length ? '<div class="hint small dim" style="margin-top:10px">체크박스를 누르면 완료 여부가 저장되고 .doc 회의록에도 그대로 표시됩니다.</div>' : '') +
+        (todos.length ? '<div class="hint small dim" style="margin-top:10px">체크박스를 누르면 완료 여부가 저장되고 .docx 회의록에도 그대로 표시됩니다.</div>' : '') +
       '</section>';
   }
 
@@ -3581,10 +3581,6 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       '</section>';
   }
 
-  /* ═══════════════════════════════════════════════════════════
-     회의록 .doc 내보내기 — Word·한글(HWP)·구글 문서에서 바로 열리는
-     Word 호환 HTML (.doc) · UTF-8 BOM · A4 표 서식
-     ═══════════════════════════════════════════════════════════ */
   function docSafeName(s) {
     var out = String(s || '회의록')
       .replace(/[\\/:*?"<>|\r\n\t]+/g, ' ')
@@ -3595,9 +3591,254 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
   }
   function docDate(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
 
-  function minutesDocHTML(m, s) {
+  /* ═══════════════════════════════════════════════════════════
+     회의록 .docx 내보내기 — 순수 JS ZIP(Store) + 최소 OOXML 파트
+     Word · 한컴독스 · 구글 문서 · 폴라리스에서 손상 없이 열린다.
+     외부 라이브러리/CDN 없이 오프라인 PWA 안에서 직접 만든다.
+     ═══════════════════════════════════════════════════════════ */
+  var CRC32_TABLE = (function () {
+    var t = new Array(256), c, n, k;
+    for (n = 0; n < 256; n++) {
+      c = n;
+      for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+
+  function crc32Of(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) c = CRC32_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function utf8Bytes(str) {
+    if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(str);
+    var bin = unescape(encodeURIComponent(str)), out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  /* ZIP(Store) — OOXML은 무압축 엔트리도 규격상 유효하다 */
+  function zipStore(files) {
+    var now = new Date();
+    var dosTime = ((now.getHours() & 31) << 11) | ((now.getMinutes() & 63) << 5) | (Math.floor(now.getSeconds() / 2) & 31);
+    var dosDate = (((now.getFullYear() - 1980) & 127) << 9) | (((now.getMonth() + 1) & 15) << 5) | (now.getDate() & 31);
+    var parts = [], central = [], offset = 0;
+    files.forEach(function (f) {
+      var name = utf8Bytes(f.name), data = f.data, crc = crc32Of(data);
+      var lh = new Uint8Array(30 + name.length), lv = new DataView(lh.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);
+      lv.setUint16(6, 0x0800, true);
+      lv.setUint16(8, 0, true);
+      lv.setUint16(10, dosTime, true);
+      lv.setUint16(12, dosDate, true);
+      lv.setUint32(14, crc, true);
+      lv.setUint32(18, data.length, true);
+      lv.setUint32(22, data.length, true);
+      lv.setUint16(26, name.length, true);
+      lv.setUint16(28, 0, true);
+      lh.set(name, 30);
+      parts.push(lh, data);
+      var cd = new Uint8Array(46 + name.length), cv = new DataView(cd.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true);
+      cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, dosTime, true);
+      cv.setUint16(14, dosDate, true);
+      cv.setUint32(16, crc, true);
+      cv.setUint32(20, data.length, true);
+      cv.setUint32(24, data.length, true);
+      cv.setUint16(28, name.length, true);
+      cv.setUint16(30, 0, true);
+      cv.setUint16(32, 0, true);
+      cv.setUint16(34, 0, true);
+      cv.setUint16(36, 0, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, offset, true);
+      cd.set(name, 46);
+      central.push(cd);
+      offset += lh.length + data.length;
+    });
+    var cdSize = 0;
+    central.forEach(function (c) { cdSize += c.length; });
+    var end = new Uint8Array(22), ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(4, 0, true);
+    ev.setUint16(6, 0, true);
+    ev.setUint16(8, files.length, true);
+    ev.setUint16(10, files.length, true);
+    ev.setUint32(12, cdSize, true);
+    ev.setUint32(16, offset, true);
+    ev.setUint16(20, 0, true);
+    var out = new Uint8Array(offset + cdSize + 22), pos = 0;
+    parts.concat(central, [end]).forEach(function (p) { out.set(p, pos); pos += p.length; });
+    return out;
+  }
+
+  /* ── OOXML 조각 ───────────────────────────────────────────── */
+  var W_NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+
+  /* XML 1.0 금지 제어문자 제거 + 엔티티 이스케이프 */
+  function xmlEsc(s) {
+    return String(s == null ? '' : s)
+      .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\uFFFE\uFFFF]/g, '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  }
+
+  function dRun(text, o) {
+    o = o || {};
+    /* CT_RPr 자식 순서(rFonts → b/bCs → i → color → sz/szCs → shd)를 지킨다 */
+    var rpr = '';
+    if (o.mono) rpr += '<w:rFonts w:ascii="Consolas" w:hAnsi="Consolas" w:cs="Consolas"/>';
+    else if (o.font) rpr += '<w:rFonts w:ascii="' + o.font + '" w:hAnsi="' + o.font + '" w:eastAsia="' + o.font + '" w:cs="' + o.font + '"/>';
+    if (o.bold) rpr += '<w:b/><w:bCs/>';
+    if (o.italic) rpr += '<w:i/>';
+    if (o.color) rpr += '<w:color w:val="' + o.color + '"/>';
+    if (o.sz) rpr += '<w:sz w:val="' + o.sz + '"/><w:szCs w:val="' + o.sz + '"/>';
+    if (o.shd) rpr += '<w:shd w:val="clear" w:color="auto" w:fill="' + o.shd + '"/>';
+    var body = String(text == null ? '' : text).split(/\r?\n/).map(function (line, i) {
+      return (i ? '<w:br/>' : '') + '<w:t xml:space="preserve">' + xmlEsc(line) + '</w:t>';
+    }).join('');
+    return '<w:r>' + (rpr ? '<w:rPr>' + rpr + '</w:rPr>' : '') + body + '</w:r>';
+  }
+
+  function dPara(runs, o) {
+    o = o || {};
+    var p = '';
+    if (o.style) p += '<w:pStyle w:val="' + o.style + '"/>';
+    if (o.keepNext) p += '<w:keepNext/>';
+    var pb = '';
+    if (o.top) pb += '<w:top w:val="single" w:sz="6" w:space="6" w:color="' + o.top + '"/>';
+    if (o.left) pb += '<w:left w:val="single" w:sz="18" w:space="8" w:color="' + o.left + '"/>';
+    if (o.bottom) pb += '<w:bottom w:val="single" w:sz="12" w:space="4" w:color="' + o.bottom + '"/>';
+    if (pb) p += '<w:pBdr>' + pb + '</w:pBdr>';
+    if (o.shd) p += '<w:shd w:val="clear" w:color="auto" w:fill="' + o.shd + '"/>';
+    var sp = '';
+    if (o.before != null) sp += ' w:before="' + o.before + '"';
+    if (o.after != null) sp += ' w:after="' + o.after + '"';
+    if (o.line != null) sp += ' w:line="' + o.line + '" w:lineRule="auto"';
+    if (sp) p += '<w:spacing' + sp + '/>';
+    if (o.ind != null) p += '<w:ind w:left="' + o.ind + '"' + (o.hang ? ' w:hanging="' + o.hang + '"' : '') + '/>';
+    if (o.jc) p += '<w:jc w:val="' + o.jc + '"/>';
+    return '<w:p>' + (p ? '<w:pPr>' + p + '</w:pPr>' : '') + String(runs || '') + '</w:p>';
+  }
+
+  function dCell(content, o) {
+    o = o || {};
+    var pr = '<w:tcW w:w="' + (o.w || 1000) + '" w:type="dxa"/>';
+    if (o.fill) pr += '<w:shd w:val="clear" w:color="auto" w:fill="' + o.fill + '"/>';
+    pr += '<w:vAlign w:val="' + (o.valign || 'top') + '"/>';
+    return '<w:tc><w:tcPr>' + pr + '</w:tcPr>' + String(content || dPara('')) + '</w:tc>';
+  }
+
+  function dRow(cells, o) {
+    o = o || {};
+    var pr = '';
+    if (o.header) pr = '<w:trPr><w:cantSplit/><w:tblHeader/></w:trPr>';
+    else if (o.cantSplit) pr = '<w:trPr><w:cantSplit/></w:trPr>';
+    return '<w:tr>' + pr + cells.join('') + '</w:tr>';
+  }
+
+  function dTable(cols, rows, o) {
+    o = o || {};
+    var color = o.border || 'D1D5DB';
+    var sides = ['top', 'left', 'bottom', 'right', 'insideH', 'insideV'];
+    var borders = '<w:tblBorders>' + sides.map(function (s) {
+      return '<w:' + s + ' w:val="single" w:sz="4" w:space="0" w:color="' + color + '"/>';
+    }).join('') + '</w:tblBorders>';
+    var pr = '<w:tblPr><w:tblStyle w:val="TableGrid"/><w:tblW w:w="5000" w:type="pct"/>' + borders +
+      '<w:tblLayout w:type="fixed"/>' +
+      '<w:tblCellMar><w:top w:w="70" w:type="dxa"/><w:left w:w="110" w:type="dxa"/>' +
+      '<w:bottom w:w="70" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tblCellMar></w:tblPr>';
+    var grid = '<w:tblGrid>' + cols.map(function (w) { return '<w:gridCol w:w="' + w + '"/>'; }).join('') + '</w:tblGrid>';
+    return '<w:tbl>' + pr + grid + rows.join('') + '</w:tbl>';
+  }
+
+  var DOCX_W = 9866; /* A4(11906) - 좌우 여백 1.8cm(1020) × 2 */
+
+  function docxParts() {
+    var ct = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+      '<Default Extension="xml" ContentType="application/xml"/>' +
+      '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
+      '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
+      '<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>' +
+      '<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>' +
+      '</Types>';
+    var rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>' +
+      '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>' +
+      '<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>' +
+      '</Relationships>';
+    var docRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+      '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>' +
+      '</Relationships>';
+    var app = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" ' +
+      'xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">' +
+      '<Application>MeetingMate</Application><DocSecurity>0</DocSecurity><ScaleCrop>false</ScaleCrop>' +
+      '<Company>미팅메이트</Company><AppVersion>1.0</AppVersion></Properties>';
+    var styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<w:styles ' + W_NS + '>' +
+      '<w:docDefaults><w:rPrDefault><w:rPr>' +
+      '<w:rFonts w:ascii="Malgun Gothic" w:hAnsi="Malgun Gothic" w:eastAsia="맑은 고딕" w:cs="Malgun Gothic"/>' +
+      '<w:sz w:val="21"/><w:szCs w:val="21"/>' +
+      '<w:lang w:val="ko-KR" w:eastAsia="ko-KR" w:bidi="ar-SA"/>' +
+      '</w:rPr></w:rPrDefault>' +
+      '<w:pPrDefault><w:pPr><w:spacing w:after="60" w:line="300" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults>' +
+      '<w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/>' +
+      '<w:pPr><w:spacing w:after="60" w:line="300" w:lineRule="auto"/></w:pPr>' +
+      '<w:rPr><w:color w:val="1F2937"/><w:sz w:val="21"/><w:szCs w:val="21"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/>' +
+      '<w:next w:val="Normal"/><w:qFormat/>' +
+      '<w:pPr><w:keepNext/><w:spacing w:before="0" w:after="60"/></w:pPr>' +
+      '<w:rPr><w:b/><w:bCs/><w:color w:val="111827"/><w:sz w:val="40"/><w:szCs w:val="40"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/>' +
+      '<w:next w:val="Normal"/><w:qFormat/>' +
+      '<w:pPr><w:spacing w:after="240"/></w:pPr>' +
+      '<w:rPr><w:color w:val="6B7280"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/>' +
+      '<w:next w:val="Normal"/><w:qFormat/>' +
+      '<w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="320" w:after="140"/>' +
+      '<w:pBdr><w:bottom w:val="single" w:sz="12" w:space="4" w:color="10B981"/></w:pBdr><w:outlineLvl w:val="0"/></w:pPr>' +
+      '<w:rPr><w:b/><w:bCs/><w:color w:val="065F46"/><w:sz w:val="26"/><w:szCs w:val="26"/></w:rPr></w:style>' +
+      '<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/>' +
+      '<w:next w:val="Normal"/><w:qFormat/>' +
+      '<w:pPr><w:keepNext/><w:keepLines/><w:spacing w:before="200" w:after="80"/><w:outlineLvl w:val="1"/></w:pPr>' +
+      '<w:rPr><w:b/><w:bCs/><w:color w:val="374151"/><w:sz w:val="21"/><w:szCs w:val="21"/></w:rPr></w:style>' +
+      '<w:style w:type="table" w:default="1" w:styleId="TableNormal"><w:name w:val="Normal Table"/>' +
+      '<w:tblPr><w:tblInd w:w="0" w:type="dxa"/><w:tblCellMar>' +
+      '<w:top w:w="0" w:type="dxa"/><w:left w:w="108" w:type="dxa"/>' +
+      '<w:bottom w:w="0" w:type="dxa"/><w:right w:w="108" w:type="dxa"/></w:tblCellMar></w:tblPr></w:style>' +
+      '<w:style w:type="table" w:styleId="TableGrid"><w:name w:val="Table Grid"/><w:basedOn w:val="TableNormal"/>' +
+      '<w:pPr><w:spacing w:after="0" w:line="264" w:lineRule="auto"/></w:pPr>' +
+      '<w:tblPr><w:tblBorders>' +
+      '<w:top w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>' +
+      '<w:left w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>' +
+      '<w:bottom w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>' +
+      '<w:right w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>' +
+      '<w:insideH w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>' +
+      '<w:insideV w:val="single" w:sz="4" w:space="0" w:color="D1D5DB"/>' +
+      '</w:tblBorders></w:tblPr></w:style>' +
+      '</w:styles>';
+    return { ct: ct, rels: rels, docRels: docRels, app: app, styles: styles };
+  }
+
+  /* 회의록 본문 = OOXML document.xml */
+  function minutesDocXML(m, s) {
     s = s || {};
-    var d = new Date(m.startedAt);
+    var d = new Date(m.startedAt || Date.now());
     var mini = isMinutesMeeting(m);
     var entries = m.entries || [];
     var starCount = entries.filter(function (e) { return e.star; }).length;
@@ -3605,112 +3846,172 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
     var agenda = s.agenda || [];
     var decisions = s.decisions || [];
     var highlights = s.highlights || [];
-
     var keywords = kwFromSummary(s);
+    var x = [];
+
+    function h1(text) {
+      return dPara(dRun(text, { bold: true, color: '065F46', sz: 26 }),
+        { style: 'Heading1', bottom: '10B981', before: 320, after: 140, keepNext: true });
+    }
+    function h2(text) {
+      return dPara(dRun(text, { bold: true, color: '374151', sz: 21 }),
+        { style: 'Heading2', before: 200, after: 80, keepNext: true });
+    }
+    function kwBullet(text) {
+      var p = kwParts(text);
+      var runs = dRun('• ', { bold: true, color: '10B981', sz: 21 });
+      if (p.kw) runs += dRun(p.kw, { bold: true, color: '065F46', sz: 21 }) + dRun('  ', { sz: 21 });
+      runs += dRun(p.body, { color: '1F2937', sz: 21 });
+      return dPara(runs, { ind: 284, hang: 284, after: 60 });
+    }
+    function none(text) {
+      return dPara(dRun(text, { color: '9CA3AF', sz: 19 }), { ind: 120, after: 60 });
+    }
+
+    /* 제목 · 부제 */
+    x.push(dPara(dRun('회의록', { bold: true, color: '111827', sz: 40 }),
+      { style: 'Title', after: 60, keepNext: true }));
+    x.push(dPara(dRun((m.title || '') + ' · 미팅메이트', { color: '6B7280', sz: 18 }),
+      { style: 'Subtitle', after: 240 }));
+
+    /* 기본 정보 표 */
     var infoRows = [
-      ['회의 제목', m.title || ''] ,
+      ['회의 제목', m.title || ''],
       ['핵심 키워드', keywords.length ? keywords.join(' · ') : '-'],
       ['일시', fmtDate(d) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes())],
       ['소요시간', fmtDur(m.durationMs || 0)],
       ['발언 수', entries.length + '건'],
       ['중요 표시', starCount + '건'],
-      ['작성 방식', (s.mode === 'gpt' ? 'GPT 요약 (' + (settings.model || 'gpt-4o-mini') + ')' : '규칙 분석') + (mini ? ' · 한국어 회의록(번역 없음)' : ' · 실시간 통역')],
+      ['작성 방식', (s.mode === 'gpt' ? 'GPT 요약 (' + (settings.model || 'gpt-4o-mini') + ')' : '규칙 분석') +
+        (mini ? ' · 한국어 회의록(번역 없음)' : ' · 실시간 통역')],
       ['작성일', fmtDate(new Date())]
     ];
-    var infoHTML = infoRows.map(function (r) {
-      return '<tr><th>' + esc(r[0]) + '</th><td>' + esc(r[1]) + '</td></tr>';
-    }).join('');
+    x.push(dTable([2100, 7766], infoRows.map(function (r) {
+      return dRow([
+        dCell(dPara(dRun(r[0], { bold: true, color: '374151', sz: 21 }), { after: 0 }), { w: 2100, fill: 'F3F4F6' }),
+        dCell(dPara(dRun(r[1], { color: '1F2937', sz: 21 }), { after: 0 }), { w: 7766 })
+      ]);
+    })));
 
-    function docKwLi(text) {
-      var p = kwParts(text);
-      return '<li>' + (p.kw ? '<b class="kw">' + esc(p.kw) + '</b> ' : '') + esc(p.body) + '</li>';
+    /* 핵심 키워드 배지 */
+    if (keywords.length) {
+      var kr = [];
+      keywords.forEach(function (k, i) {
+        if (i) kr.push(dRun('   ', { sz: 19 }));
+        kr.push(dRun('#' + k, { bold: true, color: '065F46', sz: 19, shd: 'ECFDF5' }));
+      });
+      x.push(dPara(kr.join(''), { ind: 120, after: 160, before: 160 }));
     }
-    var agendaHTML = agenda.length
-      ? '<ul class="kwul">' + agenda.map(docKwLi).join('') + '</ul>'
-      : '<p class="none">정리된 논의가 없습니다.</p>';
-    var decisionsHTML = decisions.length
-      ? '<ul class="kwul">' + decisions.map(docKwLi).join('') + '</ul>'
-      : '<p class="none">명시적으로 확정된 사항이 없습니다.</p>';
-    var highlightsHTML = highlights.length
-      ? '<h3>★ 중요 표시</h3><ul class="kwul">' + highlights.map(docKwLi).join('') + '</ul>'
-      : '';
-    var kwLineHTML = keywords.length
-      ? '<div class="kwline">' + keywords.map(function (k) { return '<span class="kwchip">#' + esc(k) + '</span>'; }).join('') + '</div>'
-      : '';
 
-    var todoHTML = todos.length
-      ? '<table class="todo"><thead><tr><th style="width:15%">완료 여부</th><th style="width:16%">키워드</th><th>할 일</th><th style="width:20%">기한</th></tr></thead><tbody>' +
-        todos.map(function (a) {
-          var task = String((a && a.task) || '');
-          var kw = (a && a.kw) || kwParts(task).kw || kwLabelOf(task);
-          if (kwParts(task).kw) task = kwParts(task).body;
-          return '<tr><td class="' + (a.done ? 'done' : 'todo') + '">' + (a.done ? '☑ 완료' : '☐ 미완료') + '</td>' +
-            '<td class="kwcell">' + (kw ? '#' + esc(kw) : '-') + '</td>' +
-            '<td>' + esc(task) + (a.owner ? ' <span class="owner">(' + esc(a.owner) + ')</span>' : '') + '</td>' +
-            '<td>' + esc(a.due || '-') + '</td></tr>';
-        }).join('') + '</tbody></table>'
-      : '<p class="none">To-do가 정리되지 않았습니다.</p>';
+    /* 1. 주요사항 요약 */
+    x.push(h1('1. 주요사항 요약'));
+    x.push(dPara(dRun(s.oneLiner || '', { bold: true, color: '111827', sz: 23 }),
+      { left: '10B981', ind: 160, after: 180, before: 40 }));
+    x.push(h2('주요 논의'));
+    x.push(agenda.length ? agenda.map(kwBullet).join('') : none('정리된 논의가 없습니다.'));
+    x.push(h2('결정 사항'));
+    x.push(decisions.length ? decisions.map(kwBullet).join('') : none('명시적으로 확정된 사항이 없습니다.'));
+    if (highlights.length) {
+      x.push(h2('★ 중요 표시'));
+      x.push(highlights.map(kwBullet).join(''));
+    }
 
-    var logHTML = entries.map(function (e) {
-      var star = e.star ? ' <span class="star">★</span>' : '';
-      if (mini) return '<tr><td class="t">' + fmtClock(e.t) + '</td><td>' + esc(e.src) + star + '</td></tr>';
-      return '<tr><td class="t">' + fmtClock(e.t) + '</td><td>' + esc(e.src) + star +
-        (e.dst ? '<div class="tr">→ ' + esc(e.dst) + '</div>' : '') + '</td></tr>';
-    }).join('');
+    /* 2. To-do */
+    x.push(h1('2. To-do'));
+    if (todos.length) {
+      var todoRows = [dRow([
+        dCell(dPara(dRun('완료 여부', { bold: true, color: '065F46', sz: 19 }), { after: 0 }), { w: 1480, fill: 'ECFDF5' }),
+        dCell(dPara(dRun('키워드', { bold: true, color: '065F46', sz: 19 }), { after: 0 }), { w: 1580, fill: 'ECFDF5' }),
+        dCell(dPara(dRun('할 일', { bold: true, color: '065F46', sz: 19 }), { after: 0 }), { w: 4836, fill: 'ECFDF5' }),
+        dCell(dPara(dRun('기한', { bold: true, color: '065F46', sz: 19 }), { after: 0 }), { w: 1970, fill: 'ECFDF5' })
+      ], { header: true })];
+      todos.forEach(function (a) {
+        var task = String((a && a.task) || '');
+        var kw = (a && a.kw) || kwParts(task).kw || kwLabelOf(task);
+        if (kwParts(task).kw) task = kwParts(task).body;
+        var done = !!a.done;
+        todoRows.push(dRow([
+          dCell(dPara(dRun(done ? '☑ 완료' : '☐ 미완료',
+            { bold: true, color: done ? '047857' : 'B45309', sz: 19 }), { after: 0 }), { w: 1480 }),
+          dCell(dPara(dRun(kw ? '#' + kw : '-', { bold: true, color: '065F46', sz: 19 }), { after: 0 }), { w: 1580 }),
+          dCell(dPara(dRun(task, { color: '1F2937', sz: 19 }) +
+            (a.owner ? dRun(' (' + a.owner + ')', { color: '6B7280', sz: 18 }) : ''), { after: 0 }), { w: 4836 }),
+          dCell(dPara(dRun(a.due || '-', { color: '1F2937', sz: 19 }), { after: 0 }), { w: 1970 })
+        ], { cantSplit: true }));
+      });
+      x.push(dTable([1480, 1580, 4836, 1970], todoRows));
+    } else {
+      x.push(none('To-do가 정리되지 않았습니다.'));
+    }
 
-    return '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
-      '<head><meta charset="utf-8"><title>' + esc(m.title || '회의록') + '</title>' +
-      '<style>' +
-        '@page{size:A4;margin:2cm 1.8cm}' +
-        'body{font-family:"Malgun Gothic","\ub9d1\uc740 \uace0\ub515","Dotum",sans-serif;font-size:10.5pt;color:#1F2937;line-height:1.6}' +
-        'h1{font-size:20pt;margin:0 0 4pt;color:#111827}' +
-        '.sub{color:#6B7280;font-size:9pt;margin-bottom:14pt}' +
-        'h2{font-size:13pt;margin:18pt 0 8pt;padding-bottom:4pt;border-bottom:1.5pt solid #10B981;color:#065F46}' +
-        'h3{font-size:10.5pt;margin:12pt 0 4pt;color:#374151}' +
-        'table{border-collapse:collapse;width:100%}' +
-        'table.info th{width:22%;text-align:left;background:#F3F4F6;border:0.5pt solid #D1D5DB;padding:5pt 7pt;font-weight:bold;color:#374151}' +
-        'table.info td{border:0.5pt solid #D1D5DB;padding:5pt 7pt}' +
-        'table.todo th{background:#ECFDF5;border:0.5pt solid #A7F3D0;padding:5pt 7pt;text-align:left;font-size:9.5pt;color:#065F46}' +
-        'table.todo td{border:0.5pt solid #D1D5DB;padding:5pt 7pt;vertical-align:top}' +
-        'td.done{color:#047857;font-weight:bold}td.todo{color:#B45309}' +
-        '.owner{color:#6B7280;font-size:9pt}' +
-        'ul,ol{margin:4pt 0 0 0;padding-left:16pt}' +
-        'li{margin:0 0 3pt}' +
-        '.oneliner{font-size:11.5pt;font-weight:bold;color:#111827;border-left:3pt solid #10B981;padding-left:8pt;margin:0 0 10pt}' +
-        '.none{color:#9CA3AF;font-size:9.5pt}' +
-        'table.log td{border:0.5pt solid #E5E7EB;padding:4pt 6pt;vertical-align:top;font-size:9.5pt}' +
-        'table.log td.t{width:13%;color:#6B7280;font-family:Consolas,monospace;font-size:8.5pt;white-space:nowrap}' +
-        'table.log .tr{color:#4B5563;font-size:9pt;margin-top:2pt}' +
-        '.star{color:#B45309}' +
-        '.kwline{margin:0 0 12pt}' +
-        '.kwchip{display:inline-block;margin:0 4pt 3pt 0;padding:1.5pt 6pt;border:0.75pt solid #6EE7B7;background:#ECFDF5;color:#065F46;font-size:9pt;font-weight:bold}' +
-        'b.kw{color:#065F46}' +
-        'ul.kwul li{margin:0 0 4pt}' +
-        'td.kwcell{color:#065F46;font-weight:bold;font-size:9pt}' +
-        '.foot{margin-top:20pt;color:#9CA3AF;font-size:8pt;border-top:0.5pt solid #E5E7EB;padding-top:6pt}' +
-      '</style></head><body>' +
-      '<h1>회의록</h1>' +
-      '<div class="sub">' + esc(m.title || '') + ' · 미팅메이트</div>' +
-      '<table class="info">' + infoHTML + '</table>' +
-      kwLineHTML +
-      '<h2>1. 주요사항 요약</h2>' +
-      '<p class="oneliner">' + esc(s.oneLiner || '') + '</p>' +
-      '<h3>주요 논의</h3>' + agendaHTML +
-      '<h3>결정 사항</h3>' + decisionsHTML + highlightsHTML +
-      '<h2>2. To-do</h2>' + todoHTML +
-      '<h2>전체 발언 기록</h2>' +
-      '<table class="log"><tbody>' + logHTML + '</tbody></table>' +
-      '<div class="foot">미팅메이트로 작성 · ' + fmtDate(new Date()) + ' · 이 파일은 기기에서 직접 생성되었습니다.</div>' +
-      '</body></html>';
+    /* 전체 발언 기록 */
+    x.push(h1(mini ? '전체 발언 기록' : '전체 자막 · 발언 기록'));
+    var logRows = [dRow([
+      dCell(dPara(dRun('시간', { bold: true, color: '6B7280', sz: 17 }), { after: 0 }), { w: 1283, fill: 'F9FAFB' }),
+      dCell(dPara(dRun('발언 내용', { bold: true, color: '6B7280', sz: 17 }), { after: 0 }), { w: 8583, fill: 'F9FAFB' })
+    ], { header: true })];
+    entries.forEach(function (e) {
+      var cell = dPara(dRun(e.src || '', { color: '1F2937', sz: 19 }) +
+        (e.star ? dRun(' ★', { bold: true, color: 'B45309', sz: 19 }) : ''), { after: 0 });
+      if (!mini && e.dst) cell += dPara(dRun('→ ' + e.dst, { color: '4B5563', sz: 17 }), { after: 0, before: 20 });
+      logRows.push(dRow([
+        dCell(dPara(dRun(fmtClock(e.t), { color: '6B7280', sz: 17, mono: true }), { after: 0 }), { w: 1283 }),
+        dCell(cell, { w: 8583 })
+      ], { cantSplit: true }));
+    });
+    if (entries.length) x.push(dTable([1283, 8583], logRows));
+    else x.push(none('기록된 발언이 없습니다.'));
+
+    /* 꼬리말 */
+    x.push(dPara(dRun('미팅메이트로 작성 · ' + fmtDate(new Date()) + ' · 이 파일은 기기에서 직접 생성되었습니다.',
+      { color: '9CA3AF', sz: 16 }), { top: 'E5E7EB', before: 320, after: 0 }));
+
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<w:document ' + W_NS + ' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+      '<w:body>' + x.join('') +
+      '<w:sectPr><w:pgSz w:w="11906" w:h="16838"/>' +
+      '<w:pgMar w:top="1134" w:right="1020" w:bottom="1134" w:left="1020" w:header="720" w:footer="720" w:gutter="0"/>' +
+      '</w:sectPr></w:body></w:document>';
+  }
+
+  function minutesDocxBlob(m, s) {
+    s = s || {};
+    var p = docxParts();
+    var now = new Date();
+    var iso = now.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    var core = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+      '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" ' +
+      'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" ' +
+      'xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' +
+      '<dc:title>' + xmlEsc('회의록 · ' + (m.title || '')) + '</dc:title>' +
+      '<dc:subject>' + xmlEsc(m.title || '') + '</dc:subject>' +
+      '<dc:creator>미팅메이트</dc:creator><cp:lastModifiedBy>미팅메이트</cp:lastModifiedBy>' +
+      '<dcterms:created xsi:type="dcterms:W3CDTF">' + iso + '</dcterms:created>' +
+      '<dcterms:modified xsi:type="dcterms:W3CDTF">' + iso + '</dcterms:modified>' +
+      '</cp:coreProperties>';
+    var files = [
+      { name: '[Content_Types].xml', data: utf8Bytes(p.ct) },
+      { name: '_rels/.rels', data: utf8Bytes(p.rels) },
+      { name: 'docProps/core.xml', data: utf8Bytes(core) },
+      { name: 'docProps/app.xml', data: utf8Bytes(p.app) },
+      { name: 'word/document.xml', data: utf8Bytes(minutesDocXML(m, s)) },
+      { name: 'word/_rels/document.xml.rels', data: utf8Bytes(p.docRels) },
+      { name: 'word/styles.xml', data: utf8Bytes(p.styles) }
+    ];
+    return new Blob([zipStore(files)], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
   }
 
   function exportMinutesDoc(m) {
     if (!m) return;
     if (!m.summary) { toast('회의록 요약을 먼저 만들어 주세요.'); return; }
-    var name = '회의록_' + docDate(new Date(m.startedAt)) + '_' + docSafeName(m.title) + '.doc';
-    var html = minutesDocHTML(m, m.summary);
-    downloadBlob(new Blob(['\ufeff' + html], { type: 'application/msword;charset=utf-8' }), name);
-    toast('회의록 .doc 파일을 저장했습니다. Word·한글에서 바로 열 수 있어요.');
+    var name = '회의록_' + docDate(new Date(m.startedAt)) + '_' + docSafeName(m.title) + '.docx';
+    try {
+      var blob = minutesDocxBlob(m, m.summary);
+      downloadBlob(blob, name);
+      toast('회의록 .docx 파일을 저장했습니다. Word·한글·구글 문서에서 바로 열려요.');
+    } catch (e) {
+      toast('회의록 파일을 만들지 못했습니다: ' + ((e && e.message) || e));
+    }
   }
 
   function ensureAudioEl() {
@@ -4630,7 +4931,18 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       dirMode: function () { return dirMode(); },
       minutes: function () { return minutesMode(); },
       setMinutes: function (on) { setMinutesMode(on); },
-      docHTML: function (id) { var m = findMeeting(id); return m && m.summary ? minutesDocHTML(m, m.summary) : ''; },
+      docxXML: function (id, meeting, summary) {
+        var m = (meeting && typeof meeting === 'object') ? meeting
+          : (typeof id === 'string' ? findMeeting(id) : id);
+        var s = summary || (m && m.summary) || {};
+        return m ? minutesDocXML(m, s) : '';
+      },
+      docxFiles: function (id, meeting, summary) {
+        var m = (meeting && typeof meeting === 'object') ? meeting
+          : (typeof id === 'string' ? findMeeting(id) : id);
+        var s = summary || (m && m.summary) || {};
+        return m ? { xml: minutesDocXML(m, s), blob: minutesDocxBlob(m, s).size } : null;
+      },
       listenLang: function () { return langOf(rt.speaker); },
       direction: function (text, hint) { return directionFor(text, hint); },
       feed: function (text, spk) { return addUtterance(text, spk || 'other'); },
