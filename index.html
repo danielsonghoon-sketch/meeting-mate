@@ -426,6 +426,22 @@ label.field{display:block;font-size:12px;font-weight:700;color:var(--muted);marg
 .sr-badge[data-state="demo"]{border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.1);color:#C7D2FE}
 .sr-badge[data-state="demo"] i{background:#818CF8}
 
+/* 화면 꺼짐 방지 상태 */
+.keep-badge{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;
+  border:1px solid rgba(56,189,248,.32);background:rgba(56,189,248,.08);
+  font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#BAE6FD;white-space:nowrap;
+}
+.keep-badge i{width:6px;height:6px;border-radius:50%;background:#38BDF8}
+.keep-badge[data-state="on"]{border-color:rgba(16,185,129,.38);background:rgba(16,185,129,.1);color:#A7F3D0}
+.keep-badge[data-state="on"] i{background:#34D399;animation:beat 1.8s infinite}
+.keep-badge[data-state="pending"]{border-color:rgba(245,158,11,.4);background:rgba(245,158,11,.1);color:#FCD34D}
+.keep-badge[data-state="pending"] i{background:#F59E0B;animation:beat 1.1s infinite}
+.keep-badge[data-state="paused"],.keep-badge[data-state="disabled"],.keep-badge[data-state="unsupported"],.keep-badge[data-state="off"]{border-color:rgba(148,163,184,.28);background:rgba(148,163,184,.07);color:#94A3B8}
+.keep-badge[data-state="paused"] i,.keep-badge[data-state="disabled"] i,.keep-badge[data-state="unsupported"] i,.keep-badge[data-state="off"] i{background:#64748B;animation:none}
+.keep-badge[data-state="background"]{border-color:rgba(129,140,248,.4);background:rgba(99,102,241,.1);color:#C7D2FE}
+.keep-badge[data-state="background"] i{background:#818CF8;animation:beat 2.2s infinite}
+
 .session-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .session-actions .btn{min-height:44px}
 .rec-toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px 11px;background:rgba(255,255,255,.025);font-size:12px;font-weight:700;cursor:pointer;min-height:42px}
@@ -754,8 +770,8 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
 (function () {
   'use strict';
 
-  var BUILD = '9932a07bea';
-  var VERSION = '1.0.0';
+  var BUILD = '819b7030eb';
+  var VERSION = '1.1.0';
 
   /* ── storage keys ─────────────────────────────────────────── */
   var K = {
@@ -778,7 +794,8 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
     dirMode: 'auto',
     ttsRate: 1,
     summaryMode: 'auto',
-    koMinutes: false
+    koMinutes: false,
+    keepAwake: true
   };
 
   var LANG_LABEL = { en: 'English', ko: '한국어' };
@@ -934,7 +951,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
     entries: [], speaker: 'other', interim: '', interimSpk: 'other',
     interimDst: '', interimPending: false, interimErr: '', interimSeq: 0, interimReq: '', interimTimer: null,
     timerId: null, rafId: null, autoscroll: true,
-    recognize: null, wantMic: false, restartTimer: null, restarts: 0, srState: '',
+    recognize: null, wantMic: false, restartTimer: null, restarts: 0, srState: '', relinks: 0, revives: 0,
     micError: '', transError: '', micWarn: '', micAutoFixed: false, micTracks: 0,
     watch: { timer: null, results: 0, heard: false, warned: false },
     audio: null, rec: { on: false, recorder: null, chunks: [], mime: '', startedAt: 0, lengthMs: 0, demoNodes: [] },
@@ -1496,6 +1513,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
   function restartRecognitionSoon(delay) {
     if (!rt.active || rt.demo) return;
     rt.wantMic = true;
+    rt.relinks++;
     clearTimeout(rt.restartTimer);
     updateSrStatus();
     rt.restartTimer = setTimeout(function () {
@@ -1874,6 +1892,363 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
   }
 
   /* ═══════════════════════════════════════════════════════════
+     화면 꺼짐 방지(Wake Lock) · 화면이 꺼져도 멈추지 않게 유지
+     · 미팅 시작 시 Screen Wake Lock 으로 자동 화면 꺼짐을 막는다
+     · 음악처럼 계속 재생되는 아주 작은 Web Audio 를 흘려
+       화면이 꺼져도 브라우저가 페이지를 멈추지 않게 한다(마이크는 건드리지 않음)
+     · 화면 복귀·OS 중단 시 자막(음성 인식)·녹음을 자동 재연결
+     ═══════════════════════════════════════════════════════════ */
+  var keep = {
+    lock: null, pending: null, fails: 0, retryTimer: null, want: false,
+    ctx: null, el: null, osc: null, gain: null, dest: null,
+    watchTimer: null, reviving: false, srProbe: 0, forceHidden: null
+  };
+
+  function wakeSupported() {
+    return !!(navigator.wakeLock && typeof navigator.wakeLock.request === 'function');
+  }
+  function pageHidden() {
+    return keep.forceHidden != null ? !!keep.forceHidden : document.visibilityState === 'hidden';
+  }
+  function keepAwakeOn() { return settings.keepAwake !== false; }
+
+  function releaseWakeLock() {
+    clearTimeout(keep.retryTimer);
+    keep.retryTimer = null;
+    var lock = keep.lock;
+    keep.lock = null;
+    if (!lock) return;
+    try { lock.onrelease = null; } catch (e) {}
+    try { lock.release(); } catch (e) {}
+  }
+
+  function acquireWakeLock() {
+    if (!rt.active || rt.paused || !keep.want || !keepAwakeOn()) { updateKeepStatus(); return Promise.resolve(false); }
+    if (!wakeSupported()) { updateKeepStatus(); return Promise.resolve(false); }
+    if (keep.lock) return Promise.resolve(true);
+    if (pageHidden()) { updateKeepStatus(); return Promise.resolve(false); }
+    if (keep.pending) return keep.pending;
+    keep.pending = navigator.wakeLock.request('screen').then(function (lock) {
+      keep.pending = null;
+      keep.fails = 0;
+      if (!rt.active || rt.paused || !keep.want || !keepAwakeOn()) {
+        try { lock.release(); } catch (e) {}
+        updateKeepStatus();
+        return false;
+      }
+      keep.lock = lock;
+      try {
+        lock.addEventListener('release', function () {
+          if (keep.lock === lock) keep.lock = null;
+          updateKeepStatus();
+          // OS가 잠금을 회수했는데 화면은 켜져 있으면 곧바로 다시 요청
+          // (일시정지·종료처럼 우리가 의도적으로 놓은 경우에는 다시 잡지 않는다)
+          if (rt.active && !rt.paused && keep.want && keepAwakeOn() && !pageHidden()) scheduleWakeRetry(900);
+        });
+      } catch (e) {}
+      updateKeepStatus();
+      return true;
+    }).catch(function () {
+      keep.pending = null;
+      keep.fails += 1;
+      updateKeepStatus();
+      if (rt.active && !rt.paused && keep.want && keepAwakeOn() && !pageHidden()) {
+        scheduleWakeRetry(Math.min(20000, 1200 * keep.fails));
+      }
+      return false;
+    });
+    return keep.pending;
+  }
+
+  function scheduleWakeRetry(delay) {
+    clearTimeout(keep.retryTimer);
+    keep.retryTimer = setTimeout(function () {
+      keep.retryTimer = null;
+      if (rt.active && !rt.paused && keep.want && keepAwakeOn() && !keep.lock) acquireWakeLock();
+    }, delay == null ? 1200 : delay);
+  }
+
+  /* ── 들리지 않는 keepalive 오디오 ──────────────────────────────
+     마이크(getUserMedia)를 잡지 않고 재생만 하므로 안드로이드의
+     음성 인식·녹음 마이크 충돌과 무관하다. 볼륨은 사실상 0. */
+  function startKeepAlive() {
+    if (!rt.active || rt.paused || !keep.want || !keepAwakeOn()) return;
+    if (keep.el) {
+      try { if (keep.el.paused) keep.el.play().catch(function () {}); } catch (e) {}
+      updateKeepStatus();
+      return;
+    }
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC || !window.MediaStream) return;
+    try {
+      var ctx = new AC();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      gain.gain.value = 0.0012;          // 무음(0)이면 브라우저가 최적화하므로 아주 작게
+      osc.type = 'sine';
+      osc.frequency.value = 110;
+      var dest = ctx.createMediaStreamDestination();
+      osc.connect(gain);
+      gain.connect(dest);
+      osc.start();
+      var el = document.createElement('audio');
+      el.id = 'keepAliveAudio';
+      el.setAttribute('playsinline', '');
+      el.setAttribute('aria-hidden', 'true');
+      el.volume = 0.02;
+      el.srcObject = dest.stream;
+      el.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none';
+      document.body.appendChild(el);
+      keep.ctx = ctx;
+      keep.osc = osc;
+      keep.gain = gain;
+      keep.dest = dest;
+      keep.el = el;
+      if (ctx.state === 'suspended') ctx.resume().catch(function () {});
+      el.play().catch(function () {});
+    } catch (e) {
+      keep.ctx = keep.osc = keep.gain = keep.dest = keep.el = null;
+    }
+    updateKeepStatus();
+  }
+
+  function stopKeepAlive() {
+    try { if (keep.osc) keep.osc.stop(); } catch (e) {}
+    try {
+      if (keep.el) {
+        keep.el.pause();
+        keep.el.srcObject = null;
+        if (keep.el.parentNode) keep.el.parentNode.removeChild(keep.el);
+      }
+    } catch (e) {}
+    try { if (keep.ctx && keep.ctx.state !== 'closed') keep.ctx.close(); } catch (e) {}
+    keep.ctx = null; keep.osc = null; keep.gain = null; keep.dest = null; keep.el = null;
+  }
+
+  /* ── 미디어 세션 — 잠금 화면에서도 '재생 중'인 미팅으로 표시 ───── */
+  function setMediaSession() {
+    var ms = navigator.mediaSession;
+    if (!ms) return;
+    try {
+      if (window.MediaMetadata) {
+        ms.metadata = new window.MediaMetadata({
+          title: rt.title || '미팅메이트 미팅',
+          artist: minutesMode() ? '한국어 회의록 녹음 중' : '실시간 통역 · 녹음 중',
+          album: '미팅메이트',
+          artwork: [
+            { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: 'icon-512.png', sizes: '512x512', type: 'image/png' }
+          ]
+        });
+      }
+      ms.playbackState = rt.paused ? 'paused' : 'playing';
+    } catch (e) {}
+    var handlers = {
+      play: function () { if (rt.active && rt.paused) togglePause(); },
+      pause: function () { if (rt.active && !rt.paused) togglePause(); },
+      stop: function () { if (rt.active) endMeeting({ confirm: false }); }
+    };
+    Object.keys(handlers).forEach(function (k) {
+      try { ms.setActionHandler(k, handlers[k]); } catch (e) {}
+    });
+  }
+
+  function clearMediaSession() {
+    var ms = navigator.mediaSession;
+    if (!ms) return;
+    try { ms.metadata = null; ms.playbackState = 'none'; } catch (e) {}
+    ['play', 'pause', 'stop', 'nexttrack', 'previoustrack'].forEach(function (k) {
+      try { ms.setActionHandler(k, null); } catch (e) {}
+    });
+  }
+
+  /* ── 미팅 화면 상태 표시 ─────────────────────────────────────── */
+  function keepStateNow() {
+    if (!rt.active) return { key: 'off', label: '화면 유지 대기' };
+    if (!keepAwakeOn()) return { key: 'disabled', label: '화면 유지 꺼짐' };
+    if (!wakeSupported()) return { key: 'unsupported', label: '화면 유지 미지원' };
+    if (rt.paused) return { key: 'paused', label: '일시정지' };
+    if (pageHidden()) return { key: 'background', label: '백그라운드 유지' };
+    if (!keep.lock) return { key: 'pending', label: keep.fails ? '화면 유지 재시도…' : '화면 유지 재연결…' };
+    return { key: 'on', label: '화면 유지 중' };
+  }
+
+  function updateKeepStatus() {
+    var el = $('#keepStatus');
+    if (!el) return;
+    var s = keepStateNow();
+    el.setAttribute('data-state', s.key);
+    el.innerHTML = '<i></i>' + esc(s.label);
+    el.title = s.key === 'on'
+      ? '미팅 중에는 화면이 자동으로 꺼지지 않습니다.'
+      : (s.key === 'unsupported'
+        ? '이 브라우저는 화면 유지(Wake Lock)를 지원하지 않습니다. Chrome으로 열면 화면이 꺼지지 않습니다.'
+        : (s.key === 'disabled'
+          ? '설정에서 "미팅 중 화면 꺼짐 방지"를 켜면 화면이 꺼지지 않습니다.'
+          : '화면 꺼짐 방지를 다시 연결하는 중입니다.'));
+  }
+
+  /* ── 녹음 살아 있는지 + 끊겼으면 다시 연결 ───────────────────── */
+  function recorderAlive() {
+    var rec = rt.rec.recorder;
+    if (!rec) return false;
+    if (rec.state !== 'recording' && rec.state !== 'paused') return false;
+    var mic = rt.audio && rt.audio.mic;
+    if (!mic) return !!rt.demo;
+    var tracks = mic.getAudioTracks();
+    if (!tracks.length) return false;
+    return tracks.some(function (t) { return t.readyState === 'live'; });
+  }
+
+  function reviveRecording() {
+    if (keep.reviving || !rt.active || rt.paused || rt.demo) return false;
+    if (!rt.rec.on) return false;
+    keep.reviving = true;
+    var chunks = rt.rec.chunks.slice();     // 지금까지 모은 녹음 조각은 잃지 않는다
+    var startedAt = rt.rec.startedAt;
+    try {
+      if (rt.rec.recorder) {
+        rt.rec.recorder.onstop = null;
+        rt.rec.recorder.ondataavailable = null;
+        rt.rec.recorder.onerror = null;
+      }
+    } catch (e) {}
+    rt.rec.recorder = null;
+    teardownAudio();
+    setupAudio({}).then(function (a) {
+      keep.reviving = false;
+      if (!rt.active || rt.paused) { rt.rec.on = false; updateRecUI(); updateKeepStatus(); return; }
+      if (!a || !a.dest) {
+        rt.rec.on = false;
+        rt.micWarn = 'auto';
+        updateRecUI();
+        updateLiveBanner();
+        updateKeepStatus();
+        return;
+      }
+      rt.rec.chunks = chunks;
+      rt.rec.on = true;
+      if (!startRecording()) { rt.rec.on = false; updateKeepStatus(); return; }
+      rt.rec.startedAt = startedAt || Date.now();
+      rt.revives++;
+      rt.watch.results = 0;
+      rt.watch.heard = false;
+      rt.watch.warned = false;
+      rt.watch.startAt = Date.now();
+      rt.watch.lastAt = Date.now();
+      updateRecUI();
+      updateLiveBanner();
+      updateKeepStatus();
+      toast('화면이 꺼져 끊긴 녹음을 자동으로 다시 연결했습니다.');
+    }).catch(function () {
+      keep.reviving = false;
+      rt.rec.on = false;
+      updateRecUI();
+      updateKeepStatus();
+    });
+    return true;
+  }
+
+  /* ── 유지 감시 — 4초마다 잠금·녹음·자막을 확인하고 되살린다 ───── */
+  function keepWatchTick() {
+    if (!rt.active) { stopKeepWatch(); return; }
+    if (!keepAwakeOn()) { updateKeepStatus(); return; }
+    if (!pageHidden()) {
+      if (!rt.paused && !keep.lock && !keep.pending) acquireWakeLock();
+      if (!rt.paused && !keep.el) startKeepAlive();
+    }
+    if (!rt.paused) {
+      if (rt.rec.on && !keep.reviving && !recorderAlive()) reviveRecording();
+      if (rt.wantMic && !rt.demo && !rt.recognize) {
+        var now = Date.now();
+        if (!keep.srProbe || now - keep.srProbe > 6000) { keep.srProbe = now; startRecognition(); }
+      }
+    }
+    updateKeepStatus();
+  }
+
+  function startKeepWatch() {
+    clearInterval(keep.watchTimer);
+    keep.watchTimer = setInterval(keepWatchTick, 4000);
+  }
+  function stopKeepWatch() {
+    clearInterval(keep.watchTimer);
+    keep.watchTimer = null;
+  }
+
+  function startSessionKeep() {
+    if (!rt.active) return;
+    if (!keepAwakeOn()) { keep.want = false; updateKeepStatus(); return; }
+    keep.want = true;
+    acquireWakeLock();
+    startKeepAlive();
+    setMediaSession();
+    startKeepWatch();
+    updateKeepStatus();
+  }
+
+  function stopSessionKeep() {
+    keep.want = false;
+    stopKeepWatch();
+    releaseWakeLock();
+    stopKeepAlive();
+    clearMediaSession();
+    keep.reviving = false;
+    keep.srProbe = 0;
+    keep.fails = 0;
+    updateKeepStatus();
+  }
+
+  function pauseSessionKeep() {
+    keep.want = false;
+    releaseWakeLock();
+    stopKeepAlive();
+    setMediaSession();
+    updateKeepStatus();
+  }
+
+  function resumeSessionKeep() {
+    if (!keepAwakeOn()) { keep.want = false; updateKeepStatus(); return; }
+    keep.want = true;
+    acquireWakeLock();
+    startKeepAlive();
+    setMediaSession();
+    startKeepWatch();
+    updateKeepStatus();
+  }
+
+  function setKeepAwake(on) {
+    settings.keepAwake = !!on;
+    saveSettings();
+    if (rt.active) {
+      keep.want = settings.keepAwake && !rt.paused;
+      if (settings.keepAwake) {
+        if (!rt.paused) { acquireWakeLock(); startKeepAlive(); startKeepWatch(); }
+      } else {
+        stopKeepWatch();
+        releaseWakeLock();
+        stopKeepAlive();
+      }
+    }
+    updateKeepStatus();
+  }
+
+  /* 화면이 다시 켜지면 잠금·유지 오디오·끊긴 자막/녹음을 곧바로 되살린다 */
+  function handleVisibilityChange() {
+    if (!rt.active) { updateKeepStatus(); return; }
+    if (!pageHidden()) {
+      if (keepAwakeOn()) { acquireWakeLock(); startKeepAlive(); }
+      if (!rt.paused) {
+        if (rt.wantMic && !rt.demo && !rt.recognize) restartRecognitionSoon(200);
+        if (rt.rec.on && !keep.reviving && !recorderAlive()) reviveRecording();
+      }
+    } else if (!rt.paused && keepAwakeOn()) {
+      startKeepAlive();
+    }
+    updateKeepStatus();
+  }
+
+  /* ═══════════════════════════════════════════════════════════
      미팅 세션
      ═══════════════════════════════════════════════════════════ */
   function elapsedMs() {
@@ -2164,6 +2539,8 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
     rt.micTracks = 0;
     rt.watch = { timer: null, results: 0, heard: false, warned: false, startAt: 0, lastAt: 0 };
     rt.restarts = 0;
+    rt.relinks = 0;
+    rt.revives = 0;
     rt.title = opts.title || (minutesMode()
       ? (rt.demo ? '데모 한국어 회의록' : '한국어 회의 · ' + fmtShort(new Date()))
       : (rt.demo ? '데모 비즈니스 미팅' : '비즈니스 미팅 · ' + fmtShort(new Date())));
@@ -2173,6 +2550,8 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
 
     renderMain();
     startTimer();
+    // 화면 자동 꺼짐 방지(Wake Lock) + 화면이 꺼져도 멈추지 않는 유지
+    startSessionKeep();
 
     // 안드로이드: 설정에서 '실시간 자막 우선'을 켜른 경우는 녹음 없이 시작
     var captionFirst = IS_MOBILE && !!settings.captionFirst && !rt.demo;
@@ -2271,6 +2650,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       rt.pauseMark = Date.now();
       stopRecognition();
       pauseRecording();
+      pauseSessionKeep();
       clearTimeout(rt.watch.timer);
       rt.watch.timer = null;
       var t = $('#timerVal');
@@ -2283,6 +2663,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       resumeRecording();
       if (!rt.demo) startRecognition();
       if (rt.rec.on) armMicWatch();
+      resumeSessionKeep();
       renderMain();
     }
   }
@@ -2299,6 +2680,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
     closeSheet();
     if (typeof rt.demoAbort === 'function') { rt.demoAbort(); rt.demoAbort = null; }
     stopRecognition();
+    stopSessionKeep();
     rt.wantMic = false;
     clearInterval(rt.timerId);
     cancelAnimationFrame(rt.rafId);
@@ -3260,6 +3642,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       renderInterim();
       updateLiveBanner();
       updateSrStatus();
+      updateKeepStatus();
       if (rt.autoscroll) scrollCaptions();
       updateRecUI();
     }
@@ -3354,6 +3737,7 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
         (mini ? '' : '<div class="speaker-switch">' + speakerBtnHTML('other') + speakerBtnHTML('me') + '</div>') +
         '<div class="caption-tools">' +
           '<span class="sr-badge" id="srStatus" data-state="' + srStateNow().key + '"><i></i>' + esc(srStateNow().label) + '</span>' +
+          '<span class="keep-badge" id="keepStatus" data-state="' + keepStateNow().key + '"><i></i>' + esc(keepStateNow().label) + '</span>' +
           '<span class="tiny dim" id="utteranceCount">' + rt.entries.length + '개 발언</span>' +
           '<span class="tiny dim">·</span>' +
           '<span class="tiny dim" id="dirMini">' + (mini ? '한국어 원문' : DIR_TAG[dirMode()]) + '</span>' +
@@ -4370,6 +4754,12 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
             : '데스크톱은 끄는 것을 권장합니다 (녹음+자막 동시)') + '</div></div>' +
           '<button class="switch" data-act="toggle-caption-first" aria-pressed="' + (settings.captionFirst ? 'true' : 'false') + '" aria-label="실시간 자막 우선"></button></div>' +
       '</div>' +
+      '<div class="set-group"><h3>화면·백그라운드 유지</h3>' +
+        '<div class="set-row tight"><div><div class="lbl">미팅 중 화면 꺼짐 방지</div>' +
+          '<div class="sub">미팅을 시작하면 화면 자동 꺼짐을 막고(Wake Lock), 화면이 꺼지더라도 녹음·자막이 끊기지 않도록 유지합니다. 기본 켜짐.</div></div>' +
+          '<button class="switch" data-act="toggle-keep-awake" aria-pressed="' + (settings.keepAwake !== false ? 'true' : 'false') + '" aria-label="미팅 중 화면 꺼짐 방지"></button></div>' +
+        '<div class="hint" style="margin-top:8px">화면이 자동으로 꺼지지 않게 잡아 두고, 화면이 꺼졌다가 다시 켜지면 자막·녹음을 자동으로 재연결합니다. 전원 버튼으로 직접 화면을 꺼을 때는 안드로이드가 마이크를 잠시 멈출 수 있어요 — Chrome을 <b>설정 → 앱 → Chrome → 배터리 → 제한 없음</b>으로 두면 가장 안정적입니다.</div>' +
+      '</div>' +
       '<div class="set-group"><h3>데이터</h3>' +
         '<div class="set-row"><div><div class="lbl">백업 내보내기</div><div class="sub">미팅 기록·표현 (녹음 오디오·API 키 제외)</div></div>' +
           '<button class="btn sm ghost" data-act="backup-export">내보내기</button></div>' +
@@ -4747,6 +5137,14 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
           : '녹음 + 자막 동시 — 다음 미팅부터 녹음도 함께 켭니다.');
         break;
       case 'toggle-autoscroll': settings.autoScroll = !settings.autoScroll; rt.autoscroll = settings.autoScroll; saveSettings(); settingsSheet(); break;
+      case 'toggle-keep-awake':
+        setKeepAwake(settings.keepAwake === false);
+        settingsSheet();
+        renderMain();
+        toast(settings.keepAwake
+          ? '미팅 중 화면 꺼짐 방지 — 미팅을 시작하면 화면이 꺼지지 않고, 끊긴 자막·녹음도 자동으로 다시 연결합니다.'
+          : '화면 꺼짐 방지를 껐습니다. 휴대폰 화면이 자동으로 꺼질 수 있습니다.');
+        break;
       case 'translate-test': {
         var box = $('#testResult');
         if (box) box.innerHTML = '<div class="banner info" style="margin-top:8px">' + I.info + '<div class="grow">번역 서버에 확인 중…</div></div>';
@@ -4862,6 +5260,12 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
   window.addEventListener('online', function () { toast('온라인 상태입니다. 번역이 다시 동작합니다.'); if (rt.active) updateLiveBanner(); });
   window.addEventListener('offline', function () { toast('오프라인입니다. 실시간 번역과 음성 인식이 제한됩니다.'); if (rt.active) updateLiveBanner(); });
 
+  /* 화면 꺼짐·복귀 — 잠금과 자막·녹음을 자동으로 다시 연결 */
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  window.addEventListener('pagehide', function () { if (rt.active) saveDraft(); });
+  window.addEventListener('pageshow', function (ev) { if (ev.persisted && rt.active) handleVisibilityChange(); });
+  window.addEventListener('focus', function () { if (rt.active && !pageHidden()) handleVisibilityChange(); });
+
   window.addEventListener('beforeunload', function (ev) {
     if (rt.active) {
       saveDraft();
@@ -4922,7 +5326,11 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
         audio: !!rt.audio, micTracks: rt.micTracks, recOn: !!(rt.rec.recorder && rt.rec.recorder.state === 'recording'),
         wantMic: rt.wantMic, srState: srStateNow().key, micWarn: rt.micWarn, micAutoFixed: rt.micAutoFixed,
         interim: rt.interim, interimDst: rt.interimDst, interimPending: rt.interimPending, captionFirst: !!settings.captionFirst,
-        minutes: minutesMode(), mode: minutesMode() ? 'minutes' : 'translate'
+        minutes: minutesMode(), mode: minutesMode() ? 'minutes' : 'translate',
+        keepAwake: keepAwakeOn(), wakeSupported: wakeSupported(), wakeLock: !!keep.lock,
+        keepAlive: !!keep.el, mediaSession: !!(navigator.mediaSession && navigator.mediaSession.metadata),
+        keepState: keepStateNow().key, hidden: pageHidden(), reviving: !!keep.reviving,
+        relinks: rt.relinks, revives: rt.revives
       };
     },
     demoLines: demoLines,
@@ -4949,6 +5357,25 @@ ul.clean.kwlist li>span{flex:1;min-width:0}
       interim: function (text, spk) { if (spk) rt.speaker = spk; processResults([{ txt: text, isFinal: false }]); },
       final: function (text, spk) { if (spk) rt.speaker = spk; return processResults([{ txt: text, isFinal: true }]); },
       srError: function (code) { handleRecognitionError(code); },
+      keepAwake: function (on) { setKeepAwake(on); },
+      keepState: function () { return keepStateNow(); },
+      visibility: function (hidden) {
+        keep.forceHidden = hidden == null ? null : !!hidden;
+        document.dispatchEvent(new Event('visibilitychange'));
+      },
+      dropRecognition: function () {
+        // 화면 꺼짐 등으로 OS가 인식을 끊은 상태 (자동 재시작 없음)
+        if (rt.recognize) {
+          try { rt.recognize.onend = null; rt.recognize.abort(); } catch (e) {}
+        }
+        rt.recognize = null;
+        rt.wantMic = true;
+      },
+      killMic: function () {
+        // OS가 마이크 트랙을 끊은 상태
+        try { if (rt.audio && rt.audio.mic) rt.audio.mic.getTracks().forEach(function (t) { t.stop(); }); } catch (e) {}
+      },
+      watchTick: function () { keepWatchTick(); },
       micHeard: function () {
         rt.watch.heard = true;
         if (rt.active && IS_MOBILE) { clearTimeout(rt.watch.timer); rt.watch.timer = setTimeout(checkMicCollision, 120); }
